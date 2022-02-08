@@ -2,9 +2,6 @@
   <a-config-provider id="app" :locale="locale">
     <fullscreen ref="fullscreen">
       <div>
-        <!-- <a-button type="primary" @click="showModal">
-          Open Modal with async logic
-        </a-button> -->
         <a-modal
           title="Update password to proceed"
           :visible="this.$store.state.taskShowModal"
@@ -72,7 +69,6 @@ export default {
         ja: jaJP
       },
       ModalText: 'Content of the modal',
-      // visible: true,
       confirmLoading: false,
 
       labelCol: { span: 4 },
@@ -90,7 +86,6 @@ export default {
 
   methods: {
     showModal () {
-      // this.visible = true
       this.$store.state.taskShowModal = true
     },
 
@@ -98,7 +93,6 @@ export default {
       this.ModalText = 'The modal will be closed after 1 second'
       this.confirmLoading = true
       setTimeout(() => {
-        // this.visible = false
         this.$store.state.taskShowModal = false
         this.confirmLoading = false
       }, 1000)
@@ -119,7 +113,6 @@ export default {
           password: this.form.password
         }).then(() => {
           this.$store.state.taskShowModal = false
-          // this.$router.push('/login')
         })
       })
     },
@@ -146,39 +139,17 @@ export default {
       this.$refs.fullscreen.toggle()
     },
 
-    // $route (to, from) {
-    //   if (to.path === '/home' && from.path === '/login') {
-    //     this.$visibleUzduotisModal = true
-    //   }
-    // }
-
     $route (to, from) {
       this.firstLogin().then(first => {
-        // alert('current route is ' + this.$route.path)
         if (first && to.path !== '/login' && this.$route.path !== '/login') {
-          // if (to.path === '/home' && from.path === '/login') {
-          //   alert('"first_login" value is ' + first)
-          //   this.$store.state.taskShowModal = true
-          //   console.log('vuex store taskShowModal value: ' + this.$store.state.taskShowModal)
-          // }
-          // if (to.path === '/home' && from.path === '/login') {
-          //   this.$visibleUzduotisModal = true
-          // }
           this.$session.isAlive().then(alive => {
             this.$store.state.afterFirstLogin = true
-            // alert('session alive: ' + alive + ', afterFirstLogin: ' + this.$store.state.afterFirstLogin)
             if (alive && this.$store.state.afterFirstLogin) {
               this.$store.state.taskShowModal = true
             }
           })
         }
       })
-      // this.$session.isAlive().then(alive => {
-      //   alert('session alive: ' + alive + ', afterFirstLogin: ' + this.$store.state.afterFirstLogin)
-      //   if (alive && this.$store.state.afterFirstLogin) {
-      //     this.$store.state.taskShowModal = true
-      //   }
-      // })
     }
   },
   created () {
