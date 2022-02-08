@@ -33,9 +33,6 @@ import '@/components/VuciForm'
 
 Vue.config.productionTip = false
 
-// modal passwrd change uzduotis
-// Vue.prototype.$visibleUzduotisModal = false
-
 Vue.use(VueTimers)
 
 Vue.use(fullscreen)
