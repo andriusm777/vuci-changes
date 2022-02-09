@@ -14,13 +14,13 @@ export default new Vuex.Store({
     // new variable from task. Used to show password change modal after first login
     taskShowModal: false,
     afterFirstLogin: false,
+    task2BtnVisibility: true,
     task2RouterInfo: []
   },
   mutations: {
-    setTask2RouterInfo (state, kazkas) {
-      state.task2RouterInfo = kazkas
+    setTask2RouterInfo (state, task2RouterInfoResponse) {
+      state.task2RouterInfo = task2RouterInfoResponse
     },
-
     setMenus (state, menus) {
       state.menus = menus
     },
