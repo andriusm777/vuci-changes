@@ -13,9 +13,14 @@ export default new Vuex.Store({
     spintip: null,
     // new variable from task. Used to show password change modal after first login
     taskShowModal: false,
-    afterFirstLogin: false
+    afterFirstLogin: false,
+    task2RouterInfo: []
   },
   mutations: {
+    setTask2RouterInfo (state, kazkas) {
+      state.task2RouterInfo = kazkas
+    },
+
     setMenus (state, menus) {
       state.menus = menus
     },
@@ -48,5 +53,6 @@ export default new Vuex.Store({
 
       if (config.show) { state.spinning++ } else { state.spinning-- }
     }
+
   }
 })

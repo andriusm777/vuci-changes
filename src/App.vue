@@ -29,6 +29,7 @@
       <a-spin v-if="loaded" :spinning="spinning > 0" :tip="spintip || $t('Loading...')" size="large">
         <router-view></router-view>
       </a-spin>
+      <task-usage-drawer></task-usage-drawer>
     </fullscreen>
     <left-side-bar></left-side-bar>
   </a-config-provider>
@@ -38,9 +39,13 @@
 import zhCN from 'ant-design-vue/es/locale-provider/zh_CN'
 import zhTW from 'ant-design-vue/es/locale-provider/zh_TW'
 import jaJP from 'ant-design-vue/es/locale-provider/ja_JP'
+import TaskUsageDrawer from '@/components/VuciLayout/src/TaskUsageDrawer'
 import { mapState } from 'vuex'
 
 export default {
+  components: {
+    TaskUsageDrawer
+  },
   data () {
     const validatePass = (rule, value, callback) => {
       if (value === '') {
@@ -70,7 +75,6 @@ export default {
       },
       ModalText: 'Content of the modal',
       confirmLoading: false,
-
       labelCol: { span: 4 },
       wrapperCol: { span: 10 },
       form: {
