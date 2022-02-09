@@ -1,6 +1,6 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-// import { session } from '@/plugins/session'
+import { session } from '@/plugins/session'
 // import { rpc } from '@/plugins/rpc'
 import axios from 'axios'
 // importing mapstate so we could reach the state values
@@ -63,6 +63,28 @@ const router = new Router({
       import('@/components/404.vue')
   }
   ]
+})
+
+// enabled navigation guard using the current session
+function beforeEach (to, next, alive) {
+  if (to.path !== '/login') {
+    if (alive) {
+      next()
+    } else {
+      next('/login')
+    }
+  } else {
+    next()
+  }
+}
+
+router.beforeEach((to, from, next) => {
+  session.isAlive().then((alive) => {
+    if (alive) session.startHeartbeat()
+    else session.logout()
+
+    beforeEach(to, next, alive)
+  })
 })
 
 export default router
