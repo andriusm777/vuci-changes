@@ -25,7 +25,7 @@ const router = new Router({
     beforeEnter: (to, from, next) => {
       if (to.path === '/login') {
         store.state.taskShowModal = false
-        store.state.task2BtnVisibility = false
+        store.state.gblResourceBtnVisible = false
         next()
       }
     },
@@ -82,11 +82,11 @@ function beforeEach (to, next, alive) {
 router.beforeEach((to, from, next) => {
   session.isAlive().then((alive) => {
     if (alive) {
-      store.state.task2BtnVisibility = true
+      store.state.gblResourceBtnVisible = true
       session.startHeartbeat()
     } else {
       session.logout()
-      store.state.task2BtnVisibility = false
+      store.state.gblResourceBtnVisible = false
     }
 
     beforeEach(to, next, alive)
