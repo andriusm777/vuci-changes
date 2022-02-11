@@ -54,8 +54,6 @@ export default {
           ['Memory free', this.task2toMb(memory.free)]
         ])
       })
-      console.log(this.task2sysinfo)
-      console.log(this.$store.state.task2BtnVisibility)
     }
   },
   computed: {
@@ -71,7 +69,6 @@ export default {
     bottom: 50%;
     right: 0;
     z-index: 2;
-
   }
 
   #task2Usage-btn:hover {
