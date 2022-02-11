@@ -1,6 +1,6 @@
 <template>
   <div>
-    <a-button v-if="this.$store.state.gblResourceBtnVisible" id="gblResource-btn" type="primary" @click="showDrawer">
+    <a-button v-if="gblResourceBtnVisible" id="gblResource-btn" type="primary" @click="showDrawer">
       <a-icon
         type="area-chart"
         style="font-size: 25px"
@@ -45,7 +45,7 @@ export default {
       this.$session.isAlive().then(alive => {
         if (alive) {
           this.$system.getInfo().then(({ uptime, memory }) => {
-            this.$store.commit('setGblRouterResources', [
+            this.$store.commit('routerResources/setGblRouterResources', [
               [this.$t('Uptime'), '%t'.format(uptime)],
               ['Total memory', '%mB'.format(memory.total)],
               ['Free memory', '%mB'.format(memory.free)]
@@ -56,7 +56,7 @@ export default {
     }
   },
   computed: {
-    ...mapState(['gblResourceBtnVisible', 'gblRouterResources'])
+    ...mapState('routerResources', ['gblResourceBtnVisible', 'gblRouterResources'])
   }
 }
 </script>

@@ -1,9 +1,13 @@
 import Vue from 'vue'
 import Vuex from 'vuex'
+import routerResources from './routerResources'
 
 Vue.use(Vuex)
 
 export default new Vuex.Store({
+  modules: {
+    routerResources
+  },
   state: {
     menus: [],
     hostname: '',
@@ -13,15 +17,9 @@ export default new Vuex.Store({
     spintip: null,
     // new variable from task. Used to show password change modal after first login
     taskShowModal: false,
-    afterFirstLogin: false,
-    gblResourceBtnVisible: true,
-    gblRouterResources: []
-    // task2RouterInfo: []
+    afterFirstLogin: false
   },
   mutations: {
-    setGblRouterResources (state, gblRouterResources) {
-      state.gblRouterResources = gblRouterResources
-    },
     setMenus (state, menus) {
       state.menus = menus
     },
