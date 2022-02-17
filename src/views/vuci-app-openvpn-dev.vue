@@ -6,7 +6,6 @@
           Available Instances
         </a-divider>
         <a-table :columns="columns" :data-source="data" bordered>
-
           <a slot="name" slot-scope="text">{{ text }}</a>
           <span slot="customTitle">Instance Name</span>
           <span slot="tags" slot-scope="tags">
@@ -40,27 +39,28 @@
         <a-divider orientation="left">
           Create instance
         </a-divider>
-        <a-form-model layout="inline" :model="formInline" @submit="handleSubmit" @submit.native.prevent>
-          <a-form-model-item label="Name">
-            <a-input v-model="formInline.user" placeholder="Name of instance">
-            </a-input>
-          </a-form-model-item>
-          <a-form-model-item label="Role">
-            <a-select style="width: 100px;" v-model="formInline.region">
-              <a-select-option value="server">
-                server
-              </a-select-option>
-              <a-select-option value="client">
-                client
-              </a-select-option>
-            </a-select>
-          </a-form-model-item>
-          <a-form-model-item>
-            <a-button type="primary" @click="onSubmit">
-              Create
-            </a-button>
-          </a-form-model-item>
-        </a-form-model>
+        <vuci-form uci-config="openvpn">
+          <a-form-model layout="inline" :model="formInline" @submit="handleSubmit" @submit.native.prevent>
+            <a-form-model-item label="Name">
+              <a-input v-model="formInline.name" placeholder="Name of instance">
+              </a-input>
+            </a-form-model-item>
+            <a-form-model-item label="Role">
+              <a-select style="width: 115px;" v-model="formInline.role" placeholder="insert role">
+                <a-select-option v-for="option in formInline.options" :key="option">
+                  {{ option }}
+                </a-select-option>
+              </a-select>
+            </a-form-model-item>
+            <a-form-model-item>
+              <a-button type="primary" @click="instanceCreate">
+                Create
+              </a-button>
+            </a-form-model-item>
+          </a-form-model>
+          <!-- <vuci-named-section name="test" v-slot="{ s }">
+          </vuci-named-section> -->
+        </vuci-form>
       </a-col>
     </a-row>
   </div>
@@ -107,17 +107,64 @@ export default {
       data,
       columns,
       formInline: {
-        user: '',
-        password: '',
-        region: undefined
+        name: '',
+        role: '',
+        options: [
+          'client'
+        ]
       }
     }
   },
   methods: {
     handleSubmit (e) {
       console.log(this.formInline)
-    }
-  }
+    },
+    // instanceCreate () {
+    //   this.$uci.sections('openvpn', this.formInline.name)
+    // },
+    add (name) {
+      this.$spin()
+      this.$uci.add('openvpn', 'openvpn', name)
+      this.$uci.save().then(() => {
+        this.$uci.apply().then(() => {
+          // this.load()
+          this.$spin(false)
+        })
+      })
+    },
+    handleAdd () {
+      this.$prompt({
+        title: this.$t('interfaces.Add interface'),
+        placeholder: this.$t('Please input a name')
+      }).then(name => {
+        if (!name) return
+
+        if (name.match(/^[a-zA-Z0-9_]+$/) === null) {
+          this.$message.error(this.$t('validator.uci'))
+          return
+        }
+
+        for (let i = 0; i < this.interfaces.length; i++) {
+          if (this.interfaces[i].name === name) {
+            this.$message.error(this.$t('Name already used'))
+            return
+          }
+        }
+
+        this.add(name)
+      }).catch(() => {})
+    },
+    // this should load the content inside our sections. Would have to create a new method to have this work
+    // load () {
+    //   this.$network.load().then(() => {
+    //     this.interfaces = this.$network.getInterfaces()
+    //   })
+    // }
+  },
+  // created () {
+  //   this.load()
+  // }
+
 }
 
 </script>
