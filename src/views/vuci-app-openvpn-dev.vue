@@ -39,28 +39,32 @@
         <a-divider orientation="left">
           Create instance
         </a-divider>
-        <vuci-form uci-config="openvpn">
-          <a-form-model layout="inline" :model="formInline" @submit="handleSubmit" @submit.native.prevent>
-            <a-form-model-item label="Name">
-              <a-input v-model="formInline.name" placeholder="Name of instance">
-              </a-input>
-            </a-form-model-item>
-            <a-form-model-item label="Role">
-              <a-select style="width: 115px;" v-model="formInline.role" placeholder="insert role">
-                <a-select-option v-for="option in formInline.options" :key="option">
-                  {{ option }}
-                </a-select-option>
-              </a-select>
-            </a-form-model-item>
-            <a-form-model-item>
-              <a-button type="primary" @click="instanceCreate">
-                Create
-              </a-button>
-            </a-form-model-item>
-          </a-form-model>
+        <!-- <vuci-form uci-config="openvpn"> -->
+        <a-form-model layout="inline" :model="formInline" @submit="add(formInline.name, role)" @submit.native.prevent>
+          <a-form-model-item label="Name">
+            <a-input v-model="formInline.name" required placeholder="Name of instance">
+            </a-input>
+          </a-form-model-item>
+          <a-form-model-item label="Role">
+            <a-select style="width: 115px;" name="type" required :uci-section="s" v-model="formInline.role" placeholder="insert role">
+              <a-select-option v-for="option in formInline.options" :key="option">
+                {{ option }}
+              </a-select-option>
+            </a-select>
+          </a-form-model-item>
+          <a-form-model-item>
+            <a-button
+              html-type="submit"
+              type="primary"
+              :disabled="formInline.name === '' || formInline.role === ''"
+            >
+              Create
+            </a-button>
+          </a-form-model-item>
+        </a-form-model>
           <!-- <vuci-named-section name="test" v-slot="{ s }">
           </vuci-named-section> -->
-        </vuci-form>
+        <!-- </vuci-form> -->
       </a-col>
     </a-row>
   </div>
@@ -104,6 +108,8 @@ const data = [
 export default {
   data () {
     return {
+      config: [],
+      sections: [],
       data,
       columns,
       formInline: {
@@ -115,6 +121,11 @@ export default {
       }
     }
   },
+  watch: {
+    loaded () {
+      this.load()
+    }
+  },
   methods: {
     handleSubmit (e) {
       console.log(this.formInline)
@@ -122,38 +133,42 @@ export default {
     // instanceCreate () {
     //   this.$uci.sections('openvpn', this.formInline.name)
     // },
-    add (name) {
+    add (name, role) {
       this.$spin()
-      this.$uci.add('openvpn', 'openvpn', name)
+      this.$uci.add('openvpn', 'openvpn', name + '_client')
       this.$uci.save().then(() => {
         this.$uci.apply().then(() => {
           // this.load()
           this.$spin(false)
         })
       })
+      this.$uci
     },
-    handleAdd () {
-      this.$prompt({
-        title: this.$t('interfaces.Add interface'),
-        placeholder: this.$t('Please input a name')
-      }).then(name => {
-        if (!name) return
+    load () {
+      this.sections = this.$uci.sections(this.config).filter(s => s['.name'] === this.name)
+    }
+    // handleAdd () {
+    //   this.$prompt({
+    //     title: this.$t('interfaces.Add interface'),
+    //     placeholder: this.$t('Please input a name')
+    //   }).then(name => {
+    //     if (!name) return
 
-        if (name.match(/^[a-zA-Z0-9_]+$/) === null) {
-          this.$message.error(this.$t('validator.uci'))
-          return
-        }
+    //     if (name.match(/^[a-zA-Z0-9_]+$/) === null) {
+    //       this.$message.error(this.$t('validator.uci'))
+    //       return
+    //     }
 
-        for (let i = 0; i < this.interfaces.length; i++) {
-          if (this.interfaces[i].name === name) {
-            this.$message.error(this.$t('Name already used'))
-            return
-          }
-        }
+    //     for (let i = 0; i < this.interfaces.length; i++) {
+    //       if (this.interfaces[i].name === name) {
+    //         this.$message.error(this.$t('Name already used'))
+    //         return
+    //       }
+    //     }
 
-        this.add(name)
-      }).catch(() => {})
-    },
+    //     this.add(name)
+    //   }).catch(() => {})
+    // },
     // this should load the content inside our sections. Would have to create a new method to have this work
     // load () {
     //   this.$network.load().then(() => {
@@ -161,6 +176,11 @@ export default {
     //   })
     // }
   },
+  computed: {
+    section () {
+      return this.sections.length > 0 ? this.sections[0] : null
+    }
+  }
   // created () {
   //   this.load()
   // }
