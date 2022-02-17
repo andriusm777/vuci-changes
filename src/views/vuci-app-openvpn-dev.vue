@@ -46,7 +46,8 @@
             </a-input>
           </a-form-model-item>
           <a-form-model-item label="Role">
-            <a-select style="width: 115px;" name="type" required :uci-section="s" v-model="formInline.role" placeholder="insert role">
+            <!-- <vuci-form-item-select :uci-section="s" :label="'Protocol'" name="type" :options="formInline.options" initial="client" required/> -->
+            <a-select style="width: 115px;" name="type" required v-model="formInline.role" placeholder="insert role">
               <a-select-option v-for="option in formInline.options" :key="option">
                 {{ option }}
               </a-select-option>
@@ -121,15 +122,15 @@ export default {
       }
     }
   },
-  watch: {
-    loaded () {
-      this.load()
-    }
-  },
+  // watch: {
+  //   loaded () {
+  //     this.load()
+  //   }
+  // },
   methods: {
-    handleSubmit (e) {
-      console.log(this.formInline)
-    },
+    // handleSubmit (e) {
+    //   console.log(this.formInline)
+    // },
     // instanceCreate () {
     //   this.$uci.sections('openvpn', this.formInline.name)
     // },
@@ -138,15 +139,23 @@ export default {
       this.$uci.add('openvpn', 'openvpn', name + '_client')
       this.$uci.save().then(() => {
         this.$uci.apply().then(() => {
-          // this.load()
+          this.$uci.set('openvpn', name + '_client', 'type', role)
+          this.$uci.save()
           this.$spin(false)
         })
       })
-      this.$uci
-    },
-    load () {
-      this.sections = this.$uci.sections(this.config).filter(s => s['.name'] === this.name)
+      // this.$uci(role)
+      // this.$uci.set('openvpn', name + '_client', 'type', role)
+      // this.$uci.save().then(() => {
+      //   this.$uci.apply().then(() => {
+      //     // this.load()
+      //     this.$spin(false)
+      //   })
+      // })
     }
+    // load () {
+    //   this.sections = this.$uci.sections(this.config).filter(s => s['.name'] === this.name)
+    // }
     // handleAdd () {
     //   this.$prompt({
     //     title: this.$t('interfaces.Add interface'),
@@ -175,12 +184,12 @@ export default {
     //     this.interfaces = this.$network.getInterfaces()
     //   })
     // }
-  },
-  computed: {
-    section () {
-      return this.sections.length > 0 ? this.sections[0] : null
-    }
   }
+  // computed: {
+  //   section () {
+  //     return this.sections.length > 0 ? this.sections[0] : null
+  //   }
+  // }
   // created () {
   //   this.load()
   // }
