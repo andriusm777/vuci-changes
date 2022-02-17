@@ -39,14 +39,12 @@
         <a-divider orientation="left">
           Create instance
         </a-divider>
-        <!-- <vuci-form uci-config="openvpn"> -->
         <a-form-model layout="inline" :model="formInline" @submit="add(formInline.name, formInline.role)" @submit.native.prevent>
           <a-form-model-item label="Name">
             <a-input v-model="formInline.name" required placeholder="Name of instance">
             </a-input>
           </a-form-model-item>
           <a-form-model-item label="Role">
-            <!-- <vuci-form-item-select :uci-section="s" :label="'Protocol'" name="type" :options="formInline.options" initial="client" required/> -->
             <a-select style="width: 115px;" name="type" required v-model="formInline.role" placeholder="insert role">
               <a-select-option v-for="option in formInline.options" :key="option">
                 {{ option }}
@@ -63,9 +61,6 @@
             </a-button>
           </a-form-model-item>
         </a-form-model>
-          <!-- <vuci-named-section name="test" v-slot="{ s }">
-          </vuci-named-section> -->
-        <!-- </vuci-form> -->
       </a-col>
     </a-row>
   </div>
@@ -145,14 +140,6 @@ export default {
       this.$uci.set('openvpn', name + '_client', 'type', role)
       this.$uci.save()
       this.$uci.apply()
-      // this.$uci(role)
-      // this.$uci.set('openvpn', name + '_client', 'type', role)
-      // this.$uci.save().then(() => {
-      //   this.$uci.apply().then(() => {
-      //     // this.load()
-      //     this.$spin(false)
-      //   })
-      // })
     }
     // load () {
     //   this.sections = this.$uci.sections(this.config).filter(s => s['.name'] === this.name)
