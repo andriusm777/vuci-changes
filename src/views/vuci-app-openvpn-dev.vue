@@ -40,7 +40,7 @@
           Create instance
         </a-divider>
         <!-- <vuci-form uci-config="openvpn"> -->
-        <a-form-model layout="inline" :model="formInline" @submit="add(formInline.name, role)" @submit.native.prevent>
+        <a-form-model layout="inline" :model="formInline" @submit="add(formInline.name, formInline.role)" @submit.native.prevent>
           <a-form-model-item label="Name">
             <a-input v-model="formInline.name" required placeholder="Name of instance">
             </a-input>
