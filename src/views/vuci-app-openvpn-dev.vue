@@ -139,11 +139,12 @@ export default {
       this.$uci.add('openvpn', 'openvpn', name + '_client')
       this.$uci.save().then(() => {
         this.$uci.apply().then(() => {
-          this.$uci.set('openvpn', name + '_client', 'type', role)
-          this.$uci.save()
           this.$spin(false)
         })
       })
+      this.$uci.set('openvpn', name + '_client', 'type', role)
+      this.$uci.save()
+      this.$uci.apply()
       // this.$uci(role)
       // this.$uci.set('openvpn', name + '_client', 'type', role)
       // this.$uci.save().then(() => {
