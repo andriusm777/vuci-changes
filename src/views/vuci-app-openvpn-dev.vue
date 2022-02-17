@@ -57,7 +57,7 @@
               type="primary"
               :disabled="formInline.name === '' || formInline.role === ''"
             >
-              Create
+              Add
             </a-button>
           </a-form-model-item>
         </a-form-model>
@@ -104,7 +104,7 @@ const data = [
 export default {
   data () {
     return {
-      config: [],
+      config: 'openvpn',
       sections: [],
       data,
       columns,
@@ -140,10 +140,15 @@ export default {
       this.$uci.set('openvpn', name + '_client', 'type', role)
       this.$uci.save()
       this.$uci.apply()
+    },
+    load () {
+      // this.sections = this.$uci.sections(this.config).filter(s => s['.name'] === this.name)
+      // this.sections = this.$uci.load(this.config)
+      // this.$uci.load(this.config).then((res) => {
+      //   this.sections = this.$uci.get('openvpn', 'openvpn', 'bandymas6_client')
+      //   // this.sections = this.$uci.get('ntpserver', 'general', 'enabled') === '1'
+      // })
     }
-    // load () {
-    //   this.sections = this.$uci.sections(this.config).filter(s => s['.name'] === this.name)
-    // }
     // handleAdd () {
     //   this.$prompt({
     //     title: this.$t('interfaces.Add interface'),
@@ -172,15 +177,17 @@ export default {
     //     this.interfaces = this.$network.getInterfaces()
     //   })
     // }
-  }
+  },
   // computed: {
   //   section () {
   //     return this.sections.length > 0 ? this.sections[0] : null
   //   }
   // }
-  // created () {
-  //   this.load()
-  // }
+  async created () {
+    await this.$uci.load('openvpn')
+    this.sections = this.$uci.sections('openvpn', 'openvpn')
+    // this.load()
+  }
 
 }
 
