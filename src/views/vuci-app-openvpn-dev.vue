@@ -13,7 +13,7 @@
             <span v-text="record.type"></span>
           </template>
           <template v-slot:status="record">
-            <span>Undefined</span>
+            <span>{{getStatus(record.enable)}}</span>
           </template>
           <template v-slot:action="record">
             <a-button type="primary">
@@ -65,14 +65,15 @@
       </a-col>
     </a-row>
 
-    <a-modal :title="modalTitle" v-model="editModal" :width="800">
+    <a-modal :footer="null" :title="modalTitle" v-model="editModal" :width="800">
       <vuci-form uci-config="openvpn" v-if="editModal">
         <vuci-named-section :name="editorSection" v-slot="{ s }">
           <!-- <component :is="protoComponentName(s.proto)" :uci-section="s"/> -->
+          <vuci-form-item-switch :uci-section="s" :label="'Enable'" name="enable" initial="0" true-value="1" false-value="0" :help="'To enable the instance'"/>
           <vuci-form-item-select :uci-section="s" :label="'Authentication'" name="_auth" :options="auth" required/>
-          <vuci-form-item-input :uci-section="s" :label="'Remote host/IP address'" name="remote" placeholder="192.168.1.1."/>
+          <vuci-form-item-input :uci-section="s" :label="'Remote host/IP address'" name="remote" placeholder="192.168.1.1." depend="_auth == 'tls'"/>
           <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" placeholder="192.168.1.1." depend="_auth == 'tls'" rules="ipaddr"/>
-
+          <!-- <span :uci-section="s" depend="_auth == 'tls'">test</span> -->
         </vuci-named-section>
       </vuci-form>
       <!-- <template #footer><div/></template> -->
@@ -88,7 +89,8 @@ export default {
       config: 'openvpn',
       auth: ['tls'],
       editModal: false,
-      modalTitle: '',
+      status: '',
+      // modalTitle: '',
       editorSection: '',
       sections: [],
       columns: [
@@ -148,7 +150,16 @@ export default {
       // this.proto = this.$uci.get('openvpn', sectionName, 'proto')
       this.editorSection = sectionName
       this.editModal = true
-    },  
+    },
+    getStatus(statusValue) {
+      let status = ''
+      if (statusValue == '1') {
+        status = 'Enabled'
+      } else {
+        status = 'Disabled'
+      }
+      return status
+    },
     async load () {
       // this.sections = this.$uci.sections(this.config).filter(s => s['.name'] === this.name)
       // this.sections = this.$uci.load(this.config)
@@ -159,7 +170,6 @@ export default {
       await this.$uci.load('openvpn')
       this.sections = this.$uci.sections('openvpn', 'openvpn')
     }
-    
     // handleAdd () {
     //   this.$prompt({
     //     title: this.$t('interfaces.Add interface'),
@@ -189,11 +199,11 @@ export default {
     //   })
     // }
   },
-  // computed: {
-  //   section () {
-  //     return this.sections.length > 0 ? this.sections[0] : null
-  //   }
-  // }
+  computed: {
+    modalTitle () {
+      return `Configure ${this.editorSection}`
+    }
+  },
   created () {
     this.load()
   }
