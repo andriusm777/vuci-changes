@@ -69,10 +69,13 @@
       <vuci-form uci-config="openvpn" v-if="editModal">
         <vuci-named-section :name="editorSection" v-slot="{ s }">
           <!-- <component :is="protoComponentName(s.proto)" :uci-section="s"/> -->
+          <vuci-form-item-select :uci-section="s" :label="'Authentication'" name="_auth" :options="auth" required/>
           <vuci-form-item-input :uci-section="s" :label="'Remote host/IP address'" name="remote" placeholder="192.168.1.1."/>
+          <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" placeholder="192.168.1.1." depend="_auth == 'tls'" rules="ipaddr"/>
+
         </vuci-named-section>
       </vuci-form>
-      <template #footer><div/></template>
+      <!-- <template #footer><div/></template> -->
     </a-modal>
   </div>
 </template>
@@ -83,6 +86,7 @@ export default {
   data () {
     return {
       config: 'openvpn',
+      auth: ['tls'],
       editModal: false,
       modalTitle: '',
       editorSection: '',
