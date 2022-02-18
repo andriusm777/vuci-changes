@@ -5,18 +5,16 @@
         <a-divider orientation="left">
           Available Instances
         </a-divider>
-        <a-table :columns="columns" :data-source="data" bordered>
-          <a slot="name" slot-scope="text">{{ text }}</a>
-          <span slot="customTitle">Instance Name</span>
-          <span slot="tags" slot-scope="tags">
-            <a-tag
-              v-for="tag in tags"
-              :key="tag"
-            >
-              {{ tag.toUpperCase() }}
-            </a-tag>
-          </span>
-          <span slot="action">
+        <a-table :columns="columns" :data-source="sections" bordered>
+          <template v-slot:instance="record">
+            <a v-text="record['_name']"></a>
+          </template>
+          <template v-slot:role="record">
+            <span v-text="record.type"></span>
+          </template>
+          <template v-slot:status="record">
+          </template>
+          <template v-slot:action="record">
             <a-button type="primary">
               Start
             </a-button>
@@ -30,7 +28,7 @@
             </a-button>
             <a-divider type="vertical" />
             <a>Delete</a>
-          </span>
+          </template>
         </a-table>
       </a-col>
     </a-row>
@@ -69,36 +67,10 @@
 <script>
 
 const columns = [
-  {
-    dataIndex: 'name',
-    key: 'name',
-    slots: { title: 'customTitle' },
-    scopedSlots: { customRender: 'name' }
-  },
-  {
-    title: 'Role',
-    dataIndex: 'role',
-    key: 'role'
-  },
-  {
-    title: 'Status',
-    dataIndex: 'status',
-    key: 'status'
-  },
-  {
-    title: 'Action',
-    key: 'action',
-    scopedSlots: { customRender: 'action' }
-  }
-]
-
-const data = [
-  {
-    key: '1',
-    name: 'VPN instance name',
-    role: 'client',
-    status: 'instance is down',
-  }
+  { key: 'instance', title: 'Instance name', width: 155, scopedSlots: { customRender: 'instance' } },
+  { key: 'role', title: 'Role',  width: 100, scopedSlots: { customRender: 'role' } },
+  { key: 'status', title: 'Status', width: 150, scopedSlots: { customRender: 'status' } },
+  { key: 'action', title: 'Actions', width: 200, scopedSlots: { customRender: 'action' } }
 ]
 
 export default {
@@ -106,7 +78,6 @@ export default {
     return {
       config: 'openvpn',
       sections: [],
-      data,
       columns,
       formInline: {
         name: '',
@@ -138,17 +109,21 @@ export default {
         })
       })
       this.$uci.set('openvpn', name + '_client', 'type', role)
+      this.$uci.set('openvpn', name + '_client', '_name', name)
       this.$uci.save()
       this.$uci.apply()
     },
-    load () {
+    async load () {
       // this.sections = this.$uci.sections(this.config).filter(s => s['.name'] === this.name)
       // this.sections = this.$uci.load(this.config)
       // this.$uci.load(this.config).then((res) => {
       //   this.sections = this.$uci.get('openvpn', 'openvpn', 'bandymas6_client')
       //   // this.sections = this.$uci.get('ntpserver', 'general', 'enabled') === '1'
       // })
+      await this.$uci.load('openvpn')
+      this.sections = this.$uci.sections('openvpn', 'openvpn')
     }
+    
     // handleAdd () {
     //   this.$prompt({
     //     title: this.$t('interfaces.Add interface'),
@@ -183,10 +158,8 @@ export default {
   //     return this.sections.length > 0 ? this.sections[0] : null
   //   }
   // }
-  async created () {
-    await this.$uci.load('openvpn')
-    this.sections = this.$uci.sections('openvpn', 'openvpn')
-    // this.load()
+  created () {
+    this.load()
   }
 
 }
