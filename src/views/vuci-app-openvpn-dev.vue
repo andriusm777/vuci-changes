@@ -13,21 +13,22 @@
             <span v-text="record.type"></span>
           </template>
           <template v-slot:status="record">
+            <span>Undefined</span>
           </template>
           <template v-slot:action="record">
             <a-button type="primary">
-              Start
+              Enable
             </a-button>
             <a-divider type="vertical" />
             <a-button type="danger">
-              Stop
+              Disable
             </a-button>
             <a-divider type="vertical" />
-            <a-button>
+            <a-button @click="edit(record['.name'])">
               Edit
             </a-button>
             <a-divider type="vertical" />
-            <a-popconfirm @confirm="del(record['.name'])" :title="'Do you really want to delete ' + record['_name'] + ' ?'">
+            <a-popconfirm @confirm="del(record['.name'])" :title="'Do you really want to delete ' + record['_name'] + '?'">
               <a>Delete</a>
             </a-popconfirm>
           </template>
@@ -53,7 +54,7 @@
           </a-form-model-item>
           <a-form-model-item>
             <a-button
-              html-type="submit"
+              :html-type="(formInline.name !== '' && formInline.role !== '') ? 'submit' : 'button'"
               type="primary"
               :disabled="formInline.name === '' || formInline.role === ''"
             >
@@ -63,24 +64,35 @@
         </a-form-model>
       </a-col>
     </a-row>
+
+    <a-modal :title="modalTitle" v-model="editModal" :width="800">
+      <vuci-form uci-config="openvpn" v-if="editModal">
+        <vuci-named-section :name="editorSection" v-slot="{ s }">
+          <!-- <component :is="protoComponentName(s.proto)" :uci-section="s"/> -->
+          <vuci-form-item-input :uci-section="s" :label="'Remote host/IP address'" name="remote" placeholder="192.168.1.1."/>
+        </vuci-named-section>
+      </vuci-form>
+      <template #footer><div/></template>
+    </a-modal>
   </div>
 </template>
 
 <script>
 
-const columns = [
-  { key: 'instance', title: 'Instance name', width: 155, scopedSlots: { customRender: 'instance' } },
-  { key: 'role', title: 'Role',  width: 100, scopedSlots: { customRender: 'role' } },
-  { key: 'status', title: 'Status', width: 150, scopedSlots: { customRender: 'status' } },
-  { key: 'action', title: 'Actions', width: 200, scopedSlots: { customRender: 'action' } }
-]
-
 export default {
   data () {
     return {
       config: 'openvpn',
+      editModal: false,
+      modalTitle: '',
+      editorSection: '',
       sections: [],
-      columns,
+      columns: [
+        { key: 'instance', title: 'Instance name', width: 155, scopedSlots: { customRender: 'instance' } },
+        { key: 'role', title: 'Role',  width: 100, scopedSlots: { customRender: 'role' } },
+        { key: 'status', title: 'Status', width: 150, scopedSlots: { customRender: 'status' } },
+        { key: 'action', title: 'Actions', width: 200, scopedSlots: { customRender: 'action' } }
+      ],
       formInline: {
         name: '',
         role: '',
@@ -128,6 +140,11 @@ export default {
       this.$uci.save()
       this.$uci.apply()
     },
+    edit (sectionName) {
+      // this.proto = this.$uci.get('openvpn', sectionName, 'proto')
+      this.editorSection = sectionName
+      this.editModal = true
+    },  
     async load () {
       // this.sections = this.$uci.sections(this.config).filter(s => s['.name'] === this.name)
       // this.sections = this.$uci.load(this.config)
