@@ -27,7 +27,9 @@
               Edit
             </a-button>
             <a-divider type="vertical" />
-            <a>Delete</a>
+            <a-popconfirm @confirm="del(record['.name'])" :title="'Do you really want to delete ' + record['_name'] + ' ?'">
+              <a>Delete</a>
+            </a-popconfirm>
           </template>
         </a-table>
       </a-col>
@@ -88,6 +90,9 @@ export default {
       }
     }
   },
+  timers: {
+    load: { time: 1500, autostart: true, immediate: true, repeat: true }
+  },
   // watch: {
   //   loaded () {
   //     this.load()
@@ -100,6 +105,16 @@ export default {
     // instanceCreate () {
     //   this.$uci.sections('openvpn', this.formInline.name)
     // },
+    del (name) {
+      this.$spin()
+      this.$uci.del('openvpn', name)
+      this.$uci.save().then(() => {
+        this.$uci.apply().then(() => {
+          this.load()
+          this.$spin(false)
+        })
+      })
+    },
     add (name, role) {
       this.$spin()
       this.$uci.add('openvpn', 'openvpn', name + '_client')
