@@ -10,6 +10,8 @@ import VuciFormItemSelect from './src/VuciFormItemSelect.vue'
 import VuciFormItemSwitch from './src/VuciFormItemSwitch.vue'
 import VuciFormItemList from './src/VuciFormItemList.vue'
 import AVuciForm from './src/AVuciForm.vue'
+import VuciFormUpload from './src/VuciFormUpload.vue'
+
 // sita comment padarau, nes npm meta errorus
 // import VuciFormItemRadio from './src/VuciFormItemRadio.vue'
 
@@ -28,4 +30,5 @@ Vue.component('VuciFormItemSwitch', VuciFormItemSwitch)
 Vue.component('VuciFormItemList', VuciFormItemList)
 
 Vue.component('AVuciForm', AVuciForm)
+Vue.component('VuciFormUpload', VuciFormUpload)
 // Vue.component('VuciFormItemRadio', VuciFormItemRadio)

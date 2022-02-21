@@ -65,6 +65,7 @@
       </a-col>
     </a-row>
 
+    <!-- apsirasyti globalu upload component -->
     <a-modal :footer="null" :title="modalTitle" v-model="editModal" :width="800">
       <vuci-form uci-config="openvpn" v-if="editModal">
         <vuci-named-section :name="editorSection" v-slot="{ s }">
@@ -79,7 +80,7 @@
           <vuci-form-item-input :uci-section="s" :label="'Local tunnel endpoint IP'" name="local_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
           <vuci-form-item-input :uci-section="s" :label="'Remote tunnel endpoint IP'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
           <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
-
+          <vuci-form-upload :propas="openvpnStringProp"></vuci-form-upload>
         </vuci-named-section>
       </vuci-form>
     </a-modal>
@@ -95,12 +96,13 @@ export default {
       auth: ['tls', 'skey'],
       editModal: false,
       status: '',
+      openvpnStringProp: 'helooooo',
       // modalTitle: '',
       editorSection: '',
       sections: [],
       columns: [
         { key: 'instance', title: 'Instance name', width: 155, scopedSlots: { customRender: 'instance' } },
-        { key: 'role', title: 'Role',  width: 100, scopedSlots: { customRender: 'role' } },
+        { key: 'role', title: 'Role', width: 100, scopedSlots: { customRender: 'role' } },
         { key: 'status', title: 'Status', width: 150, scopedSlots: { customRender: 'status' } },
         { key: 'action', title: 'Actions', width: 200, scopedSlots: { customRender: 'action' } }
       ],
@@ -156,9 +158,9 @@ export default {
       this.editorSection = sectionName
       this.editModal = true
     },
-    getStatus(statusValue) {
+    getStatus (statusValue) {
       let status = ''
-      if (statusValue == '1') {
+      if (statusValue === '1') {
         status = 'Enabled'
       } else {
         status = 'Disabled'
