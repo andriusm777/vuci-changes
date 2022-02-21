@@ -69,14 +69,19 @@
       <vuci-form uci-config="openvpn" v-if="editModal">
         <vuci-named-section :name="editorSection" v-slot="{ s }">
           <!-- <component :is="protoComponentName(s.proto)" :uci-section="s"/> -->
-          <vuci-form-item-switch :uci-section="s" :label="'Enable'" name="enable" initial="0" true-value="1" false-value="0" :help="'To enable the instance'"/>
+          <vuci-form-item-switch :uci-section="s" :label="'Enable'" name="enable" :initial="false" true-value="1" false-value="0" :help="'To enable the instance'"/>
           <vuci-form-item-select :uci-section="s" :label="'Authentication'" name="_auth" :options="auth" required/>
-          <vuci-form-item-input :uci-section="s" :label="'Remote host/IP address'" name="remote" placeholder="192.168.1.1." depend="_auth == 'tls'"/>
-          <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" placeholder="192.168.1.1." depend="_auth == 'tls'" rules="ipaddr"/>
-          <!-- <span :uci-section="s" depend="_auth == 'tls'">test</span> -->
+          <vuci-form-item-input :uci-section="s" :label="'Remote host/IP address'" name="remote" rules="host" placeholder="192.168.1.1." depend="_auth == 'tls' || 'skey'"/>
+          <!-- TLS -->
+          <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'tls'" />
+          <vuci-form-item-input :uci-section="s" :label="'Remote network Netmask'" name="remote_netmask" rules="netmask4" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
+          <!-- STATIC -->
+          <vuci-form-item-input :uci-section="s" :label="'Local tunnel endpoint IP'" name="local_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+          <vuci-form-item-input :uci-section="s" :label="'Remote tunnel endpoint IP'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+          <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+
         </vuci-named-section>
       </vuci-form>
-      <!-- <template #footer><div/></template> -->
     </a-modal>
   </div>
 </template>
@@ -87,7 +92,7 @@ export default {
   data () {
     return {
       config: 'openvpn',
-      auth: ['tls'],
+      auth: ['tls', 'skey'],
       editModal: false,
       status: '',
       // modalTitle: '',
