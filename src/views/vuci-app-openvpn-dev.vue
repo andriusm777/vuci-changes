@@ -76,11 +76,11 @@
           <!-- TLS -->
           <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'tls'" />
           <vuci-form-item-input :uci-section="s" :label="'Remote network Netmask'" name="remote_netmask" rules="netmask4" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
-          <!-- STATIC -->
+          <!-- STATIC KEY -->
           <vuci-form-item-input :uci-section="s" :label="'Local tunnel endpoint IP'" name="local_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
           <vuci-form-item-input :uci-section="s" :label="'Remote tunnel endpoint IP'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
           <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
-          <vuci-form-upload :uci-section="s" :label="'Upload something'" name="some_key" depend="_auth == 'skey'" :sectionNaming="openvpnStringProp"/>
+          <vuci-form-upload :uci-section="s" :label="'Upload something'" name="some_key" test-value="" depend="_auth == 'skey'" :sectionNaming="'velNEW.'" :uploadedFileName="uploadedFileName"/>
         </vuci-named-section>
       </vuci-form>
     </a-modal>
@@ -95,8 +95,8 @@ export default {
       config: 'openvpn',
       auth: ['tls', 'skey'],
       editModal: false,
+      uploadedFileName: '',
       status: '',
-      openvpnStringProp: 'naujas.',
       // modalTitle: '',
       editorSection: '',
       sections: [],

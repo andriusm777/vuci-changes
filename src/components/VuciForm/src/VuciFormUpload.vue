@@ -5,6 +5,7 @@
       :data="{path: this.uploadedFileName}"
       :multiple="true"
       :beforeUpload="getName"
+      @change="__saveTest"
       v-model="model"
     >
       <a-button> <a-icon type="upload" /> Upload </a-button>
@@ -24,11 +25,11 @@ export default {
   name: 'VuciFormUpload',
   mixins: [VuciFormItemMixin],
   props: {
-    sectionNaming: String
-  },
-  data () {
-    return {
-      uploadedFileName: ''
+    sectionNaming: String,
+    uploadedFileName: String,
+    testValue: {
+      type: String,
+      default: 'nzn'
     }
   },
   methods: {
@@ -55,6 +56,24 @@ export default {
         this.getFileName(file)
         resolve()
       })
+    },
+    __saveTest () {
+      if (this.uploadedFileName !== '') {
+        this.$uci.set(this.config, this.sid, this.name, this.uploadedFileName)
+      } else {
+        this.$uci.set(this.config, this.sid, this.name, 'empty')
+      }
+    },
+    __save () {
+      if (this.changed()) {
+        if (this.save) { return this.save(this) }
+
+        if (this.model) {
+          this.$uci.set(this.config, this.sid, this.name, this.uploadedFileName)
+        } else {
+          this.$uci.set(this.config, this.sid, this.name, 'empty')
+        }
+      }
     }
   }
 }
