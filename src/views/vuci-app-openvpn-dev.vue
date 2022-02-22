@@ -80,9 +80,9 @@
           <vuci-form-item-input :uci-section="s" :label="'Local tunnel endpoint IP'" name="local_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
           <vuci-form-item-input :uci-section="s" :label="'Remote tunnel endpoint IP'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
           <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+          <vuci-form-upload :uci-section="s" :label="'Upload something'" name="some_key" depend="_auth == 'skey'" :sectionNaming="openvpnStringProp"/>
         </vuci-named-section>
       </vuci-form>
-      <vuci-form-upload :propas="openvpnStringProp"></vuci-form-upload>
     </a-modal>
   </div>
 </template>
@@ -96,7 +96,7 @@ export default {
       auth: ['tls', 'skey'],
       editModal: false,
       status: '',
-      openvpnStringProp: 'helooooo',
+      openvpnStringProp: 'naujas.',
       // modalTitle: '',
       editorSection: '',
       sections: [],
