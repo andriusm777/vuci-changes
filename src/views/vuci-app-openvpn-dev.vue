@@ -76,11 +76,14 @@
           <!-- TLS -->
           <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'tls'" />
           <vuci-form-item-input :uci-section="s" :label="'Remote network Netmask'" name="remote_netmask" rules="netmask4" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
+          <vuci-form-upload :uci-section="s" :label="'Upload Certificate authority certificate'" name="ca" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
+          <vuci-form-upload :uci-section="s" :label="'Upload Client certificate'" name="cert" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
+          <vuci-form-upload :uci-section="s" :label="'Upload Client key'" name="key" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
           <!-- STATIC KEY -->
           <vuci-form-item-input :uci-section="s" :label="'Local tunnel endpoint IP'" name="local_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
           <vuci-form-item-input :uci-section="s" :label="'Remote tunnel endpoint IP'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
           <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
-          <vuci-form-upload :uci-section="s" :label="'Upload something'" name="some_key" test-value="" depend="_auth == 'skey'" :sectionNaming="'velNEW.'" :uploadedFileName="uploadedFileName"/>
+          <vuci-form-upload :uci-section="s" :label="'Upload Static key'" name="secret" depend="_auth == 'skey'" :sectionNaming="uploadedFileWithSectionName"/>
         </vuci-named-section>
       </vuci-form>
     </a-modal>
@@ -96,6 +99,7 @@ export default {
       auth: ['tls', 'skey'],
       editModal: false,
       uploadedFileName: '',
+      // uploadedFileWithSectionName: '',
       status: '',
       // modalTitle: '',
       editorSection: '',
@@ -118,11 +122,6 @@ export default {
   timers: {
     load: { time: 1500, autostart: true, immediate: true, repeat: true }
   },
-  // watch: {
-  //   loaded () {
-  //     this.load()
-  //   }
-  // },
   methods: {
     // handleSubmit (e) {
     //   console.log(this.formInline)
@@ -209,6 +208,9 @@ export default {
   computed: {
     modalTitle () {
       return `Configure ${this.editorSection}`
+    },
+    uploadedFileWithSectionName () {
+      return 'cbid.openvpn.' + this.editorSection + '.' + this.uploadedFileName
     }
   },
   created () {

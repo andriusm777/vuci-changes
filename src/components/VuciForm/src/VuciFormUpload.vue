@@ -25,11 +25,11 @@ export default {
   name: 'VuciFormUpload',
   mixins: [VuciFormItemMixin],
   props: {
-    sectionNaming: String,
-    uploadedFileName: String,
-    testValue: {
-      type: String,
-      default: 'nzn'
+    sectionNaming: String
+  },
+  data () {
+    return {
+      uploadedFileName: ''
     }
   },
   methods: {
