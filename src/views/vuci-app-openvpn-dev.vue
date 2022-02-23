@@ -24,7 +24,7 @@
               Disable
             </a-button>
             <a-divider type="vertical" />
-            <a-button @click="edit(record['.name'])">
+            <a-button @eventas="epic" @click="edit(record['.name'])">
               Edit
             </a-button>
             <a-divider type="vertical" />
@@ -40,7 +40,7 @@
         <a-divider orientation="left">
           Create instance
         </a-divider>
-        <a-form-model layout="inline" :model="formInline" @submit="add(formInline.name, formInline.role)" @submit.native.prevent>
+        <a-form-model layout="inline" :model="formInline" @submit="add(formInline.name, formInline.role); edit(latestSection)" @submit.native.prevent>
           <a-form-model-item label="Name">
             <a-input v-model="formInline.name" required placeholder="Name of instance">
             </a-input>
@@ -103,6 +103,7 @@ export default {
       status: '',
       // modalTitle: '',
       editorSection: '',
+      latestSection: [],
       sections: [],
       columns: [
         { key: 'instance', title: 'Instance name', width: 155, scopedSlots: { customRender: 'instance' } },
@@ -139,9 +140,27 @@ export default {
         })
       })
     },
+    // delUploads (name) {
+    //   if (this.auth === 'tls') {
+    //     this.$spin()
+    //     this.$uci.del('openvpn', name, 'secret')
+    //   } else if (this.auth === 'skey') {
+    //     this.$spin()
+    //     this.$uci.del('openvpn', name, 'ca')
+    //     this.$uci.del('openvpn', name, 'cert')
+    //     this.$uci.del('openvpn', name, 'key')
+    //   }
+    //   this.$uci.save().then(() => {
+    //     this.$uci.apply().then(() => {
+    //       this.load()
+    //       this.$spin(false)
+    //     })
+    //   })
+    // },
     add (name, role) {
+      let sid = name + '_client'
       this.$spin()
-      this.$uci.add('openvpn', 'openvpn', name + '_client')
+      this.$uci.add('openvpn', 'openvpn', sid)
       this.$uci.save().then(() => {
         this.$uci.apply().then(() => {
           this.$spin(false)
@@ -149,13 +168,37 @@ export default {
       })
       this.$uci.set('openvpn', name + '_client', 'type', role)
       this.$uci.set('openvpn', name + '_client', '_name', name)
+      this.$uci.set('openvpn', name + '_client', '_auth', 'tls')
       this.$uci.save()
       this.$uci.apply()
+      // const sLast = this.sections[this.sections.length - 1]['.index']
+      // const sLast = this.sections[this.sections.length - 1]['.name']
+      this.latestSection = sid
+      // this.load()
+      // setTimeout(()=> {
+      //   this.$emit('eventas')
+      // }, 1500)
+      console.log('add method was ran')
+    },
+    epic () {
+      console.log('function from an emit');
+    },
+    afterAdd () {
+      this.$emit('eventas')
+      console.log('event was emitted')
     },
     edit (sectionName) {
       // this.proto = this.$uci.get('openvpn', sectionName, 'proto')
       this.editorSection = sectionName
       this.editModal = true
+      alert('Modal opened')
+    },
+    editDelay (sectionName) {
+      // this.proto = this.$uci.get('openvpn', sectionName, 'proto')
+      setTimeout(() => {
+        this.editorSection = sectionName
+        this.editModal = true
+      }, 1500)
     },
     getStatus (statusValue) {
       let status = ''
@@ -166,6 +209,10 @@ export default {
       }
       return status
     },
+    // latestObject () {
+    //   const sLast = this.sections[this.sections.length - 1]['.name']
+    //   this.latestSection = sLast
+    // },
     async load () {
       // this.sections = this.$uci.sections(this.config).filter(s => s['.name'] === this.name)
       // this.sections = this.$uci.load(this.config)
@@ -211,8 +258,12 @@ export default {
     },
     uploadedFileWithSectionName () {
       return 'cbid.openvpn.' + this.editorSection + '.' + this.uploadedFileName
-    }
+    },
+    
   },
+  // updated () {
+  //   this.latestObject ()
+  // },
   created () {
     this.load()
   }
