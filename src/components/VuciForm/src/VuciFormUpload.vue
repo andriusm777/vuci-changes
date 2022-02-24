@@ -5,7 +5,8 @@
       :data="{path: this.uploadedFileName}"
       :multiple="true"
       :beforeUpload="getName"
-      @change="__saveTest"
+      @change="comboHandleAndSave"
+      :file-list="fileList"
       v-model="model"
     >
       <a-button> <a-icon type="upload" /> Upload </a-button>
@@ -29,10 +30,22 @@ export default {
   },
   data () {
     return {
-      uploadedFileName: ''
+      uploadedFileName: '',
+      fileList: []
     }
   },
   methods: {
+    comboHandleAndSave (info) {
+      this.handleChange(info)
+      this.__saveTest()
+    },
+    handleChange (info) {
+      let fileList = info.fileList
+      //    Limit the number of uploaded files
+      //    Only to show 1 recent uploaded file, and old ones will be replaced by the new
+      fileList = fileList.slice(-1)
+      this.fileList = fileList
+    },
     onUploadArchive (info) {
       const file = info.file
       const status = file.status
@@ -60,21 +73,22 @@ export default {
     __saveTest () {
       if (this.uploadedFileName !== '') {
         this.$uci.set(this.config, this.sid, this.name, this.uploadedFileName)
+        console.log('set uploaded file name')
       } else {
-        this.$uci.set(this.config, this.sid, this.name, 'empty')
-      }
-    },
-    __save () {
-      if (this.changed()) {
-        if (this.save) { return this.save(this) }
-
-        if (this.model) {
-          this.$uci.set(this.config, this.sid, this.name, this.uploadedFileName)
-        } else {
-          this.$uci.set(this.config, this.sid, this.name, 'empty')
-        }
+        this.$uci.set(this.config, this.sid, this.name, '')
       }
     }
+    // __save () {
+    //   if (this.changed()) {
+    //     if (this.save) { return this.save(this) }
+
+    //     if (this.model) {
+    //       this.$uci.set(this.config, this.sid, this.name, this.uploadedFileName)
+    //     } else {
+    //       this.$uci.set(this.config, this.sid, this.name, 'empty')
+    //     }
+    //   }
+    // }
   }
 }
 </script>

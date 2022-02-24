@@ -91,7 +91,8 @@
 </template>
 
 <script>
-
+/* eslint dot-notation: ["error", { "allowKeywords": false }] */
+/* eslint dot-notation: ["error", { "allowPattern": "^[a-z]+(_[a-z]+)+$" }] */
 export default {
   data () {
     return {
@@ -194,24 +195,26 @@ export default {
       return status
     },
     actionEnable (name) {
-      const specificSection = this.sections.filter(s => s['_name'] === name )
-      if ( specificSection[0].hasOwnProperty('enable') === false || specificSection[0].enable === '0') {
+      // eslint-disable-next-line
+      const specificSection = this.sections.filter(s => s['_name'] === name)
+      if (Object.prototype.hasOwnProperty.call(specificSection[0], 'enable') === false || specificSection[0].enable === '0') {
         this.$spin()
         this.$uci.set('openvpn', name + '_client', 'enable', '1')
         this.$uci.save().then(() => {
-        this.$uci.apply().then(() => {
+          this.$uci.apply().then(() => {
             this.$spin(false)
           })
         })
       }
     },
     actionDisable (name) {
+      // eslint-disable-next-line
       const specificSection = this.sections.filter(s => s['_name'] === name )
-      if ( specificSection[0].hasOwnProperty('enable') === true  && specificSection[0].enable === '1') {
+      if (Object.prototype.hasOwnProperty.call(specificSection[0], 'enable') === true && specificSection[0].enable === '1') {
         this.$spin()
         this.$uci.set('openvpn', name + '_client', 'enable', '0')
         this.$uci.save().then(() => {
-        this.$uci.apply().then(() => {
+          this.$uci.apply().then(() => {
             this.$spin(false)
           })
         })
