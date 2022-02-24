@@ -9,7 +9,14 @@
       :file-list="fileList"
       v-model="model"
     >
-      <a-button> <a-icon type="upload" /> Upload </a-button>
+      <a-button> <a-icon type="upload" />
+        <span v-if="this.isFileFound === false">
+          Upload
+        </span>
+        <span v-else>
+          Upload new
+        </span>
+      </a-button>
     </a-upload>
     <span v-if="this.isFileFound">{{this.foundFileDirectory}}</span>
     <span v-else>No file found</span>
