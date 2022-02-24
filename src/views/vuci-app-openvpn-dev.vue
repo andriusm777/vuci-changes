@@ -13,7 +13,14 @@
             <span v-text="record.type"></span>
           </template>
           <template v-slot:status="record">
-            <span>{{getStatus(record.enable)}}</span>
+            <span>
+              <a-tag v-if="getStatus(record.enable) === 'Enabled'" color="blue">
+                {{getStatus(record.enable)}}
+              </a-tag>
+              <a-tag v-if="getStatus(record.enable) === 'Disabled'" color="red">
+                {{getStatus(record.enable)}}
+              </a-tag>
+            </span>
           </template>
           <template v-slot:action="record">
             <a-button type="primary" @click="actionEnable(record['_name'])">
@@ -102,6 +109,7 @@ export default {
       uploadedFileName: '',
       // uploadedFileWithSectionName: '',
       status: '',
+      statusColor: '',
       // modalTitle: '',
       editorSection: '',
       latestSection: [],
@@ -187,10 +195,8 @@ export default {
       let status = ''
       if (statusValue === '1') {
         status = 'Enabled'
-        this.statusValueSingleItem = 'Enabled'
       } else {
         status = 'Disabled'
-        this.statusValueSingleItem = 'Disabled'
       }
       return status
     },
