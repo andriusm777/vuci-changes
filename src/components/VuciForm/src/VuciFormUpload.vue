@@ -11,6 +11,9 @@
     >
       <a-button> <a-icon type="upload" /> Upload </a-button>
     </a-upload>
+    <!-- <span>{{name}}</span> -->
+    <span v-if="this.isFileFound">{{this.foundFileDirectory}}</span>
+    <span v-else>No file found</span>
   </vuci-form-item-template>
 </template>
 
@@ -26,15 +29,32 @@ export default {
   name: 'VuciFormUpload',
   mixins: [VuciFormItemMixin],
   props: {
+    name: String,
+    uciSection: Object,
     sectionNaming: String
   },
   data () {
     return {
       uploadedFileName: '',
-      fileList: []
+      foundFileDirectory: '',
+      fileList: [],
+      isFileFound: Boolean
     }
   },
   methods: {
+    isFile () {
+      // console.log('running isFle')
+      // Object.prototype.hasOwnProperty.call(this.uciSection, this.name)
+      // if (this.uciSection[this.name] === '') {
+      //   this.isFileFound = false
+      // }
+      if (Object.prototype.hasOwnProperty.call(this.uciSection, [this.name]) === false || this.uciSection[this.name] === '') {
+        this.isFileFound = false
+      } else {
+        this.foundFileDirectory = this.uciSection[this.name]
+        this.isFileFound = true
+      }
+    },
     comboHandleAndSave (info) {
       this.handleChange(info)
       this.__saveTest()
@@ -78,6 +98,9 @@ export default {
         this.$uci.set(this.config, this.sid, this.name, '')
       }
     }
+    // logConsoleTest () {
+    //   console.log(this.uciSection)
+    // }
     // __save () {
     //   if (this.changed()) {
     //     if (this.save) { return this.save(this) }
@@ -89,6 +112,10 @@ export default {
     //     }
     //   }
     // }
+  },
+  created () {
+    // this.logConsoleTest()
+    this.isFile()
   }
 }
 </script>
