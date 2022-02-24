@@ -16,15 +16,15 @@
             <span>{{getStatus(record.enable)}}</span>
           </template>
           <template v-slot:action="record">
-            <a-button type="primary">
+            <a-button type="primary" @click="actionEnable(record['_name'])">
               Enable
             </a-button>
             <a-divider type="vertical" />
-            <a-button type="danger">
+            <a-button type="danger" @click="actionDisable(record['_name'])">
               Disable
             </a-button>
             <a-divider type="vertical" />
-            <a-button @eventas="epic" @click="edit(record['.name'])">
+            <a-button @click="edit(record['.name'])">
               Edit
             </a-button>
             <a-divider type="vertical" />
@@ -104,6 +104,7 @@ export default {
       // modalTitle: '',
       editorSection: '',
       latestSection: [],
+      statusValueSingleItem: '',
       sections: [],
       columns: [
         { key: 'instance', title: 'Instance name', width: 155, scopedSlots: { customRender: 'instance' } },
@@ -158,7 +159,7 @@ export default {
     //   })
     // },
     add (name, role) {
-      let sid = name + '_client'
+      const sid = name + '_client'
       this.$spin()
       this.$uci.add('openvpn', 'openvpn', sid)
       this.$uci.save().then(() => {
@@ -169,50 +170,53 @@ export default {
       this.$uci.set('openvpn', name + '_client', 'type', role)
       this.$uci.set('openvpn', name + '_client', '_name', name)
       this.$uci.set('openvpn', name + '_client', '_auth', 'tls')
+      // this.$uci.set('openvpn', name + '_client', 'enable', '1')
       this.$uci.save()
       this.$uci.apply()
-      // const sLast = this.sections[this.sections.length - 1]['.index']
-      // const sLast = this.sections[this.sections.length - 1]['.name']
+
       this.latestSection = sid
-      // this.load()
-      // setTimeout(()=> {
-      //   this.$emit('eventas')
-      // }, 1500)
       console.log('add method was ran')
-    },
-    epic () {
-      console.log('function from an emit');
-    },
-    afterAdd () {
-      this.$emit('eventas')
-      console.log('event was emitted')
     },
     edit (sectionName) {
       // this.proto = this.$uci.get('openvpn', sectionName, 'proto')
       this.editorSection = sectionName
       this.editModal = true
-      alert('Modal opened')
-    },
-    editDelay (sectionName) {
-      // this.proto = this.$uci.get('openvpn', sectionName, 'proto')
-      setTimeout(() => {
-        this.editorSection = sectionName
-        this.editModal = true
-      }, 1500)
     },
     getStatus (statusValue) {
       let status = ''
       if (statusValue === '1') {
         status = 'Enabled'
+        this.statusValueSingleItem = 'Enabled'
       } else {
         status = 'Disabled'
+        this.statusValueSingleItem = 'Disabled'
       }
       return status
     },
-    // latestObject () {
-    //   const sLast = this.sections[this.sections.length - 1]['.name']
-    //   this.latestSection = sLast
-    // },
+    actionEnable (name) {
+      const specificSection = this.sections.filter(s => s['_name'] === name )
+      if ( specificSection[0].hasOwnProperty('enable') === false || specificSection[0].enable === '0') {
+        this.$spin()
+        this.$uci.set('openvpn', name + '_client', 'enable', '1')
+        this.$uci.save().then(() => {
+        this.$uci.apply().then(() => {
+            this.$spin(false)
+          })
+        })
+      }
+    },
+    actionDisable (name) {
+      const specificSection = this.sections.filter(s => s['_name'] === name )
+      if ( specificSection[0].hasOwnProperty('enable') === true  && specificSection[0].enable === '1') {
+        this.$spin()
+        this.$uci.set('openvpn', name + '_client', 'enable', '0')
+        this.$uci.save().then(() => {
+        this.$uci.apply().then(() => {
+            this.$spin(false)
+          })
+        })
+      }
+    },
     async load () {
       // this.sections = this.$uci.sections(this.config).filter(s => s['.name'] === this.name)
       // this.sections = this.$uci.load(this.config)
@@ -223,34 +227,6 @@ export default {
       await this.$uci.load('openvpn')
       this.sections = this.$uci.sections('openvpn', 'openvpn')
     }
-    // handleAdd () {
-    //   this.$prompt({
-    //     title: this.$t('interfaces.Add interface'),
-    //     placeholder: this.$t('Please input a name')
-    //   }).then(name => {
-    //     if (!name) return
-
-    //     if (name.match(/^[a-zA-Z0-9_]+$/) === null) {
-    //       this.$message.error(this.$t('validator.uci'))
-    //       return
-    //     }
-
-    //     for (let i = 0; i < this.interfaces.length; i++) {
-    //       if (this.interfaces[i].name === name) {
-    //         this.$message.error(this.$t('Name already used'))
-    //         return
-    //       }
-    //     }
-
-    //     this.add(name)
-    //   }).catch(() => {})
-    // },
-    // this should load the content inside our sections. Would have to create a new method to have this work
-    // load () {
-    //   this.$network.load().then(() => {
-    //     this.interfaces = this.$network.getInterfaces()
-    //   })
-    // }
   },
   computed: {
     modalTitle () {
@@ -258,8 +234,7 @@ export default {
     },
     uploadedFileWithSectionName () {
       return 'cbid.openvpn.' + this.editorSection + '.' + this.uploadedFileName
-    },
-    
+    }
   },
   // updated () {
   //   this.latestObject ()
