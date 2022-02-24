@@ -11,7 +11,6 @@
     >
       <a-button> <a-icon type="upload" /> Upload </a-button>
     </a-upload>
-    <!-- <span>{{name}}</span> -->
     <span v-if="this.isFileFound">{{this.foundFileDirectory}}</span>
     <span v-else>No file found</span>
   </vuci-form-item-template>
@@ -43,11 +42,6 @@ export default {
   },
   methods: {
     isFile () {
-      // console.log('running isFle')
-      // Object.prototype.hasOwnProperty.call(this.uciSection, this.name)
-      // if (this.uciSection[this.name] === '') {
-      //   this.isFileFound = false
-      // }
       if (Object.prototype.hasOwnProperty.call(this.uciSection, [this.name]) === false || this.uciSection[this.name] === '') {
         this.isFileFound = false
       } else {
