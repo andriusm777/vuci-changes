@@ -14,20 +14,20 @@
           </template>
           <template v-slot:status="record">
             <span>
-              <a-tag v-if="getStatus(record.enable) === 'Enabled'" color="blue">
-                {{getStatus(record.enable)}}
+              <a-tag v-if="setStatusName(record.enable) === 'Enabled'" color="blue">
+                {{setStatusName(record.enable)}}
               </a-tag>
-              <a-tag v-if="getStatus(record.enable) === 'Disabled'" color="red">
-                {{getStatus(record.enable)}}
+              <a-tag v-if="setStatusName(record.enable) === 'Disabled'" color="red">
+                {{setStatusName(record.enable)}}
               </a-tag>
             </span>
           </template>
           <template v-slot:action="record">
-            <a-button type="primary" @click="actionEnable(record['_name'])">
+            <a-button v-if="record.enable === '0'" type="primary" @click="actionEnable(record['_name'])">
               Enable
             </a-button>
-            <a-divider type="vertical" />
-            <a-button type="danger" @click="actionDisable(record['_name'])">
+            <!-- <a-divider type="vertical" /> -->
+            <a-button v-if="record.enable === '1'" type="danger" @click="actionDisable(record['_name'])">
               Disable
             </a-button>
             <a-divider type="vertical" />
@@ -47,7 +47,7 @@
         <a-divider orientation="left">
           Create instance
         </a-divider>
-        <a-form-model layout="inline" :model="formInline" @submit="add(formInline.name, formInline.role); edit(latestSection)" @submit.native.prevent>
+        <a-form-model layout="inline" :model="formInline" @submit="add(formInline.name, formInline.role); beforeAddEdit(formInline.name, latestSection)" @submit.native.prevent>
           <a-form-model-item label="Name">
             <a-input v-model="formInline.name" required placeholder="Name of instance">
             </a-input>
@@ -107,19 +107,15 @@ export default {
       auth: ['tls', 'skey'],
       editModal: false,
       uploadedFileName: '',
-      // uploadedFileWithSectionName: '',
-      status: '',
-      statusColor: '',
-      // modalTitle: '',
       editorSection: '',
-      latestSection: [],
+      latestSection: '',
       statusValueSingleItem: '',
       sections: [],
       columns: [
-        { key: 'instance', title: 'Instance name', width: 155, scopedSlots: { customRender: 'instance' } },
+        { key: 'instance', title: 'Instance name', width: 175, scopedSlots: { customRender: 'instance' } },
         { key: 'role', title: 'Role', width: 100, scopedSlots: { customRender: 'role' } },
         { key: 'status', title: 'Status', width: 150, scopedSlots: { customRender: 'status' } },
-        { key: 'action', title: 'Actions', width: 200, scopedSlots: { customRender: 'action' } }
+        { key: 'action', title: 'Actions', width: 150, scopedSlots: { customRender: 'action' } }
       ],
       formInline: {
         name: '',
@@ -169,29 +165,48 @@ export default {
     // },
     add (name, role) {
       const sid = name + '_client'
-      this.$spin()
-      this.$uci.add('openvpn', 'openvpn', sid)
-      this.$uci.save().then(() => {
-        this.$uci.apply().then(() => {
-          this.$spin(false)
+      const currentSectionNames = this.sections.map(s => s['.name'])
+      if (currentSectionNames.includes(sid) === true ) {
+        this.$message.info(`Instance ${name} already exists`)
+        return
+      } else {
+        this.$spin()
+        this.$uci.add('openvpn', 'openvpn', sid)
+        this.$uci.save().then(() => {
+          this.$uci.apply().then(() => {
+            this.$spin(false)
+          })
         })
-      })
-      this.$uci.set('openvpn', name + '_client', 'type', role)
-      this.$uci.set('openvpn', name + '_client', '_name', name)
-      this.$uci.set('openvpn', name + '_client', '_auth', 'tls')
-      // this.$uci.set('openvpn', name + '_client', 'enable', '1')
-      this.$uci.save()
-      this.$uci.apply()
+        this.$uci.set('openvpn', name + '_client', 'type', role)
+        this.$uci.set('openvpn', name + '_client', '_name', name)
+        this.$uci.set('openvpn', name + '_client', '_auth', 'tls')
+        this.$uci.set('openvpn', name + '_client', 'enable', '0')
+        // this.$uci.set('openvpn', name + '_client', 'enable', '1')
+        this.$uci.save()
+        this.$uci.apply()
 
-      this.latestSection = sid
+        this.latestSection = sid
+      }
       console.log('add method was ran')
     },
     edit (sectionName) {
       // this.proto = this.$uci.get('openvpn', sectionName, 'proto')
       this.editorSection = sectionName
-      this.editModal = true
+      if (this.editorSection !== '') {
+        this.editModal = true
+      } else {
+        return
+      }
     },
-    getStatus (statusValue) {
+    beforeAddEdit (name, latestSection) {
+      const currentSectionNames = this.sections.map(s => s['.name'])
+      if (currentSectionNames.includes(name + '_client') === true) {
+        return
+      } else {
+        this.edit(latestSection)
+      }
+    },
+    setStatusName (statusValue) {
       let status = ''
       if (statusValue === '1') {
         status = 'Enabled'
