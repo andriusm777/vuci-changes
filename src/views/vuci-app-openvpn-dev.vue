@@ -187,6 +187,7 @@ export default {
 
         this.latestSection = sid
       }
+      this.clearCreateInstanceForm()
       console.log('add method was ran')
     },
     edit (sectionName) {
@@ -195,6 +196,10 @@ export default {
       if (this.editorSection !== '') {
         this.editModal = true
       }
+    },
+    clearCreateInstanceForm () {
+      this.formInline.name = ''
+      this.formInline.role = ''
     },
     beforeAddEdit (name, latestSection) {
       const currentSectionNames = this.sections.map(s => s['.name'])

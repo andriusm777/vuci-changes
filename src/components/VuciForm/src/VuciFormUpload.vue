@@ -25,7 +25,7 @@
 
 <script>
 import VuciFormItemMixin from './VuciFormItemMixin'
-
+// this.$rpc.call('file', 'remove', { path: '/tmp/firmware.bin' })
 // /etc/vuci-uploads/
 
 // cbid.openvpn.<named-section-name>.caca.cert.pem
@@ -48,6 +48,22 @@ export default {
     }
   },
   methods: {
+    // removeFile (info) {
+    // const file = info.file
+    // const fileName = file.name
+    // if (Object.prototype.hasOwnProperty.call(this.uciSection, [this.name]) === false || this.uciSection[this.name] === '') {
+    //   this.isFileFound = false
+    // } else {
+    //   this.foundFileDirectory = this.uciSection[this.name]
+    //   this.isFileFound = true
+    // }
+    // this.$rpc.call('file', 'remove', { path: '/etc/vuci-uploads/' + this.sectionNaming + fileName })
+    // return true
+    // return new Promise(resolve => {
+    //   this.getFileName(file)
+    //   resolve()
+    // })
+    // },
     isFile () {
       if (Object.prototype.hasOwnProperty.call(this.uciSection, [this.name]) === false || this.uciSection[this.name] === '') {
         this.isFileFound = false
@@ -61,10 +77,20 @@ export default {
       this.__saveTest()
     },
     handleChange (info) {
-      let fileList = info.fileList
+      // let fileList = info.fileList
       //    Limit the number of uploaded files
       //    Only to show 1 recent uploaded file, and old ones will be replaced by the new
+      // let fileList = info.fileList.slice(-1)
+      let fileList = [...info.fileList]
       fileList = fileList.slice(-1)
+      console.log(info.fileList)
+      if (info.fileList.length === 0) {
+        // alert('fileList length is 0')
+        // info.file.slice(-1)
+        this.uploadedFileName = ''
+        // console.log(info.file)
+      }
+      // fileList = fileList.slice(-1)
       this.fileList = fileList
     },
     onUploadArchive (info) {
@@ -79,11 +105,14 @@ export default {
         this.$message.error(`upload '${file.name}' failed.`)
       }
     },
-    getFileName (file) {
+    getFileName (file, fileList) {
       const fileName = file.name
       const pathUrl = '/etc/vuci-uploads/'
       this.uploadedFileName = pathUrl + this.sectionNaming + fileName
       console.log(this.uploadedFileName)
+      console.log('file name without anything ' + fileName)
+      console.log('list of files ' + fileList)
+      // console.log(this.fileList)
     },
     getName (file) {
       return new Promise(resolve => {
