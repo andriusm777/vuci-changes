@@ -166,7 +166,7 @@ export default {
     add (name, role) {
       const sid = name + '_client'
       const currentSectionNames = this.sections.map(s => s['.name'])
-      if (currentSectionNames.includes(sid) === true ) {
+      if (currentSectionNames.includes(sid) === true) {
         this.$message.info(`Instance ${name} already exists`)
         return
       } else {
@@ -194,15 +194,11 @@ export default {
       this.editorSection = sectionName
       if (this.editorSection !== '') {
         this.editModal = true
-      } else {
-        return
       }
     },
     beforeAddEdit (name, latestSection) {
       const currentSectionNames = this.sections.map(s => s['.name'])
-      if (currentSectionNames.includes(name + '_client') === true) {
-        return
-      } else {
+      if (currentSectionNames.includes(name + '_client') === false) {
         this.edit(latestSection)
       }
     },
