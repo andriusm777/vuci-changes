@@ -23,15 +23,15 @@
             </span>
           </template>
           <template v-slot:action="record">
-            <a-button v-if="record.enable === '0'" type="primary" @click="actionEnable(record['_name'])">
+            <a-button v-if="record.enable === '0'" type="primary" @click="actionEnable(record['.name'])">
               Enable
             </a-button>
             <!-- <a-divider type="vertical" /> -->
-            <a-button v-if="record.enable === '1'" type="danger" @click="actionDisable(record['_name'])">
+            <a-button v-if="record.enable === '1'" type="danger" @click="actionDisable(record['.name'])">
               Disable
             </a-button>
             <a-divider type="vertical" />
-            <a-button @click="edit(record['.name'])">
+            <a-button @click="edit(record['.name'], record.type)">
               Edit
             </a-button>
             <a-divider type="vertical" />
@@ -47,7 +47,7 @@
         <a-divider orientation="left">
           Create instance
         </a-divider>
-        <a-form-model layout="inline" :model="formInline" @submit="add(formInline.name, formInline.role); beforeAddEdit(formInline.name, latestSection)" @submit.native.prevent>
+        <a-form-model layout="inline" :model="formInline" @submit="add(formInline.name, formInline.role)" @submit.native.prevent>
           <a-form-model-item label="Name">
             <a-input v-model="formInline.name" required placeholder="Name of instance">
             </a-input>
@@ -80,18 +80,40 @@
           <vuci-form-item-switch :uci-section="s" :label="'Enable'" name="enable" :initial="false" true-value="1" false-value="0" :help="'To enable the instance'"/>
           <vuci-form-item-select :uci-section="s" :label="'Authentication'" name="_auth" :options="auth" required/>
           <vuci-form-item-input :uci-section="s" :label="'Remote host/IP address'" name="remote" rules="host" placeholder="192.168.1.1." depend="_auth == 'tls' || 'skey'"/>
-          <!-- TLS -->
-          <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" :rules="validateLanIp" placeholder="192.168.1.1" depend="_auth == 'tls'" />
-          <vuci-form-item-input :uci-section="s" :label="'Remote network Netmask'" name="remote_netmask" rules="netmask4" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
-          <vuci-form-upload :uci-section="s" :label="'Certificate authority'" name="ca" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
-          <vuci-form-upload :uci-section="s" :label="'Client certificate'" name="cert" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
-          <vuci-form-upload :uci-section="s" :label="'Client key'" name="key" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
-          <!-- STATIC KEY -->
-          <vuci-form-item-input :uci-section="s" :label="'Local tunnel endpoint IP'" name="local_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
-          <vuci-form-item-input :uci-section="s" :label="'Remote tunnel endpoint IP'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
-          <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
-          <vuci-form-upload :uci-section="s" :label="'Static key'" name="secret" depend="_auth == 'skey'" :sectionNaming="uploadedFileWithSectionName"/>
+          <!-- CLIENT -->
+          <div v-if="editorType === 'client'">
+            <!-- TLS -->
+            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" :rules="validateLanIp" placeholder="192.168.1.1" depend="_auth == 'tls'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote network Netmask'" name="remote_netmask" rules="netmask4" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
+            <vuci-form-upload :uci-section="s" :label="'Certificate authority'" name="ca" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
+            <vuci-form-upload :uci-section="s" :label="'Client certificate'" name="cert" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
+            <vuci-form-upload :uci-section="s" :label="'Client key'" name="key" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
+            <!-- STATIC KEY -->
+            <vuci-form-item-input :uci-section="s" :label="'Local tunnel endpoint IP'" name="local_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote tunnel endpoint IP'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+            <vuci-form-upload :uci-section="s" :label="'Static key'" name="secret" depend="_auth == 'skey'" :sectionNaming="uploadedFileWithSectionName"/>
+          </div>
+          
+          <div v-if="editorType === 'server'">
+            <!-- SERVER -->
+              <!-- TLS -->
+            <vuci-form-item-input :uci-section="s" :label="'Virtual network IP address'" name="server_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'tls'" />
+            <vuci-form-item-input :uci-section="s" :label="'Virtual network netmask'" name="server_netmask" rules="netmask4" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
+            <vuci-form-upload :uci-section="s" :label="'Certificate authority'" name="ca" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
+            <vuci-form-upload :uci-section="s" :label="'Server certificate'" name="cert" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
+            <vuci-form-upload :uci-section="s" :label="'Server key'" name="key" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
+            <vuci-form-upload :uci-section="s" :label="'Diffie Hellman parameters'" name="dh" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
+              <!-- STATIC KEY -->
+            <vuci-form-item-input :uci-section="s" :label="'Local tunnel endpoint IP'" name="local_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote tunnel endpoint IP'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="network_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+            <vuci-form-upload :uci-section="s" :label="'Static key'" name="secret" depend="_auth == 'skey'" :sectionNaming="uploadedFileWithSectionName"/>
+          </div>
+
         </vuci-named-section>
+
       </vuci-form>
     </a-modal>
   </div>
@@ -108,6 +130,7 @@ export default {
       editModal: false,
       uploadedFileName: '',
       editorSection: '',
+      editorType: '',
       latestSection: '',
       statusValueSingleItem: '',
       networkLanIp: '',
@@ -155,7 +178,6 @@ export default {
       // lan ip equals to some const
       // if v equals to lan ip return
       // const networkInterfaces = []
-      
       // this.editorIface = iface
       // this.$network.load().then(() => {
       //   this.networkInterfaces = this.$network.getInterfaces()
@@ -171,7 +193,7 @@ export default {
     },
     validateLanIp (v) {
       alert(`value of v is ${v}`)
-      if (v === this.networkLanIp) {
+      if (v.toString() === this.networkLanIp) {
         alert(`running statement ${v} is equals to ${this.networkLanIp}`)
         return `Value must not match the IP of the lan ip ${this.networkLanIp}`
       }
@@ -226,15 +248,16 @@ export default {
         this.$uci.apply()
 
         this.latestSection = sid
+        this.beforeAddEdit(name, this.latestSection, role)
       }
       this.clearCreateInstanceForm()
       // console.log('add method was ran')
     },
     addServer (name, role) {
       const sid = name + '_server'
-      const currentSectionNames = this.sections.map(s => s['.name'])
-      if (currentSectionNames.includes(sid) === true) {
-        this.$message.info(`Instance ${name} already exists`)
+      const currentSectionNames = this.sections.map(s => s.type)
+      if (currentSectionNames.includes('server') === true) {
+        this.$message.info('There can only be a single server instance')
         return
       } else {
         this.$spin()
@@ -253,6 +276,7 @@ export default {
         this.$uci.apply()
 
         this.latestSection = sid
+        this.beforeAddEdit(name, this.latestSection, role)
       }
 
       this.clearCreateInstanceForm()
@@ -260,11 +284,12 @@ export default {
     },
     add (name, role) {
       if (role === 'client') {
-        alert('adding client')
+        // alert('adding client')
         this.addClient(name, role)
       } else if (role === 'server') {
-        alert('adding server')
+        // alert('adding server')
         this.addServer(name, role)
+        // this.beforeAddEdit(name, latestSection, role)
       }
       // const sid = name + '_client'
       // const currentSectionNames = this.sections.map(s => s['.name'])
@@ -292,9 +317,11 @@ export default {
       // this.clearCreateInstanceForm()
       console.log('add method was ran')
     },
-    edit (sectionName) {
+    edit (sectionName, type) {
       // this.proto = this.$uci.get('openvpn', sectionName, 'proto')
+      // alert(`edit method ran on section ${sectionName} and with type ${type}`)
       this.editorSection = sectionName
+      this.editorType = type
       if (this.editorSection !== '') {
         this.editModal = true
       }
@@ -303,10 +330,13 @@ export default {
       this.formInline.name = ''
       this.formInline.role = ''
     },
-    beforeAddEdit (name, latestSection) {
+    beforeAddEdit (name, latestSection, role) {
       const currentSectionNames = this.sections.map(s => s['.name'])
-      if (currentSectionNames.includes(name + '_client') === false) {
-        this.edit(latestSection)
+      if (currentSectionNames.includes(name + '_client') === false || currentSectionNames.includes(name + '_server') === false) {
+        // alert(`beforeAddEdit method using section ${latestSection}`)
+        this.editorType = role
+        // debugger
+        this.edit(latestSection, role)
       }
     },
     setStatusName (statusValue) {
@@ -320,10 +350,10 @@ export default {
     },
     actionEnable (name) {
       // eslint-disable-next-line
-      const specificSection = this.sections.filter(s => s['_name'] === name)
+      const specificSection = this.sections.filter(s => s['.name'] === name)
       if (Object.prototype.hasOwnProperty.call(specificSection[0], 'enable') === false || specificSection[0].enable === '0') {
         this.$spin()
-        this.$uci.set('openvpn', name + '_client', 'enable', '1')
+        this.$uci.set('openvpn', name, 'enable', '1')
         this.$uci.save().then(() => {
           this.$uci.apply().then(() => {
             this.$spin(false)
@@ -333,10 +363,10 @@ export default {
     },
     actionDisable (name) {
       // eslint-disable-next-line
-      const specificSection = this.sections.filter(s => s['_name'] === name )
+      const specificSection = this.sections.filter(s => s['.name'] === name )
       if (Object.prototype.hasOwnProperty.call(specificSection[0], 'enable') === true && specificSection[0].enable === '1') {
         this.$spin()
-        this.$uci.set('openvpn', name + '_client', 'enable', '0')
+        this.$uci.set('openvpn', name, 'enable', '0')
         this.$uci.save().then(() => {
           this.$uci.apply().then(() => {
             this.$spin(false)
