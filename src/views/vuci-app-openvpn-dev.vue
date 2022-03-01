@@ -81,7 +81,7 @@
           <vuci-form-item-select :uci-section="s" :label="'Authentication'" name="_auth" :options="auth" required/>
           <vuci-form-item-input :uci-section="s" :label="'Remote host/IP address'" name="remote" rules="host" placeholder="192.168.1.1." depend="_auth == 'tls' || 'skey'"/>
           <!-- TLS -->
-          <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'tls'" />
+          <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" :rules="validateLanIp" placeholder="192.168.1.1" depend="_auth == 'tls'" />
           <vuci-form-item-input :uci-section="s" :label="'Remote network Netmask'" name="remote_netmask" rules="netmask4" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
           <vuci-form-upload :uci-section="s" :label="'Certificate authority'" name="ca" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
           <vuci-form-upload :uci-section="s" :label="'Client certificate'" name="cert" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
@@ -110,6 +110,9 @@ export default {
       editorSection: '',
       latestSection: '',
       statusValueSingleItem: '',
+      networkLanIp: '',
+      // networkInterfaces: '',
+      // sectionsNetwork: [],
       sections: [],
       columns: [
         { key: 'instance', title: 'Instance name', width: 175, scopedSlots: { customRender: 'instance' } },
@@ -121,9 +124,20 @@ export default {
         name: '',
         role: '',
         options: [
-          'client'
+          'client', 'server'
         ]
       }
+      // localRules: {
+      //   scope: [
+      //     { required: true, message: () => this.$t('validator.required') }
+      //   ],
+      //   entry: [
+      //     { required: true, message: () => this.$t('validator.required') }
+      //   ],
+      //   perm: [
+      //     { required: true, message: () => this.$t('validator.required') }
+      //   ]
+      // }
     }
   },
   timers: {
@@ -136,6 +150,32 @@ export default {
     // instanceCreate () {
     //   this.$uci.sections('openvpn', this.formInline.name)
     // },
+    async getLanIp () {
+      // vuci get value of lan ip
+      // lan ip equals to some const
+      // if v equals to lan ip return
+      // const networkInterfaces = []
+      
+      // this.editorIface = iface
+      // this.$network.load().then(() => {
+      //   this.networkInterfaces = this.$network.getInterfaces()
+      // })
+      // return networkInterfaces
+      await this.$uci.load('network')
+      // this.sectionsNetwork = this.$uci.sections('network', 'interface')
+      this.networkLanIp = this.$uci.get('network', 'lan', 'ipaddr')
+      // const v = '192.168.1.1'
+      // if (v === this.networkLanIp) {
+      //   alert('if v equals to lan ip statement working')
+      // }
+    },
+    validateLanIp (v) {
+      alert(`value of v is ${v}`)
+      if (v === this.networkLanIp) {
+        alert(`running statement ${v} is equals to ${this.networkLanIp}`)
+        return `Value must not match the IP of the lan ip ${this.networkLanIp}`
+      }
+    },
     del (name) {
       this.$spin()
       this.$uci.del('openvpn', name)
@@ -163,7 +203,7 @@ export default {
     //     })
     //   })
     // },
-    add (name, role) {
+    addClient (name, role) {
       const sid = name + '_client'
       const currentSectionNames = this.sections.map(s => s['.name'])
       if (currentSectionNames.includes(sid) === true) {
@@ -188,6 +228,68 @@ export default {
         this.latestSection = sid
       }
       this.clearCreateInstanceForm()
+      // console.log('add method was ran')
+    },
+    addServer (name, role) {
+      const sid = name + '_server'
+      const currentSectionNames = this.sections.map(s => s['.name'])
+      if (currentSectionNames.includes(sid) === true) {
+        this.$message.info(`Instance ${name} already exists`)
+        return
+      } else {
+        this.$spin()
+        this.$uci.add('openvpn', 'openvpn', sid)
+        this.$uci.save().then(() => {
+          this.$uci.apply().then(() => {
+            this.$spin(false)
+          })
+        })
+        this.$uci.set('openvpn', sid, 'type', role)
+        this.$uci.set('openvpn', sid, '_name', name)
+        this.$uci.set('openvpn', sid, '_auth', 'tls')
+        this.$uci.set('openvpn', sid, 'enable', '0')
+        // this.$uci.set('openvpn', name + '_client', 'enable', '1')
+        this.$uci.save()
+        this.$uci.apply()
+
+        this.latestSection = sid
+      }
+
+      this.clearCreateInstanceForm()
+      // console.log('add method was ran')
+    },
+    add (name, role) {
+      if (role === 'client') {
+        alert('adding client')
+        this.addClient(name, role)
+      } else if (role === 'server') {
+        alert('adding server')
+        this.addServer(name, role)
+      }
+      // const sid = name + '_client'
+      // const currentSectionNames = this.sections.map(s => s['.name'])
+      // if (currentSectionNames.includes(sid) === true) {
+      //   this.$message.info(`Instance ${name} already exists`)
+      //   return
+      // } else {
+      //   this.$spin()
+      //   this.$uci.add('openvpn', 'openvpn', sid)
+      //   this.$uci.save().then(() => {
+      //     this.$uci.apply().then(() => {
+      //       this.$spin(false)
+      //     })
+      //   })
+      //   this.$uci.set('openvpn', name + '_client', 'type', role)
+      //   this.$uci.set('openvpn', name + '_client', '_name', name)
+      //   this.$uci.set('openvpn', name + '_client', '_auth', 'tls')
+      //   this.$uci.set('openvpn', name + '_client', 'enable', '0')
+      //   // this.$uci.set('openvpn', name + '_client', 'enable', '1')
+      //   this.$uci.save()
+      //   this.$uci.apply()
+
+      //   this.latestSection = sid
+      // }
+      // this.clearCreateInstanceForm()
       console.log('add method was ran')
     },
     edit (sectionName) {
@@ -252,6 +354,9 @@ export default {
       await this.$uci.load('openvpn')
       this.sections = this.$uci.sections('openvpn', 'openvpn')
     }
+    // getNetworkLan (v) {
+
+    // }
   },
   computed: {
     modalTitle () {
@@ -266,6 +371,7 @@ export default {
   // },
   created () {
     this.load()
+    this.getLanIp()
   }
 
 }
