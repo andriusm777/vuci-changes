@@ -79,6 +79,7 @@
           <!-- <component :is="protoComponentName(s.proto)" :uci-section="s"/> -->
           <vuci-form-item-switch :uci-section="s" :label="'Enable'" name="enable" :initial="false" true-value="1" false-value="0" :help="'To enable the instance'"/>
           <vuci-form-item-select :uci-section="s" :label="'Authentication'" name="_auth" :options="auth" required/>
+          <vuci-form-item-input :uci-section="s" :label="'Port'" name="port" rules="port" placeholder="1192"/>
           <vuci-form-item-input :uci-section="s" :label="'Remote host/IP address'" name="remote" rules="host" placeholder="192.168.1.1." depend="_auth == 'tls' || 'skey'"/>
           <!-- CLIENT -->
           <div v-if="editorType === 'client'">
@@ -94,7 +95,6 @@
             <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
             <vuci-form-upload :uci-section="s" :label="'Static key'" name="secret" depend="_auth == 'skey'" :sectionNaming="uploadedFileWithSectionName"/>
           </div>
-          
           <div v-if="editorType === 'server'">
             <!-- SERVER -->
               <!-- TLS -->
@@ -225,6 +225,27 @@ export default {
     //     })
     //   })
     // },
+    addDefaultValues (name, role, sid) {
+      this.$spin()
+      this.$uci.add('openvpn', 'openvpn', sid)
+      this.$uci.save().then(() => {
+        this.$uci.apply().then(() => {
+          this.$spin(false)
+        })
+      })
+      this.$uci.set('openvpn', sid, 'type', role)
+      this.$uci.set('openvpn', sid, '_name', name)
+      this.$uci.set('openvpn', sid, '_auth', 'tls')
+      this.$uci.set('openvpn', sid, 'enable', '0')
+      this.$uci.set('openvpn', sid, 'keepalive', '10 120')
+      this.$uci.set('openvpn', sid, 'port', '1194')
+      this.$uci.set('openvpn', sid, 'persist_key', '1')
+      this.$uci.set('openvpn', sid, 'verb', '5')
+      this.$uci.set('openvpn', sid, 'proto', 'udp')
+      this.$uci.set('openvpn', sid, 'cipher', 'BF-CBC')
+      this.$uci.save()
+      this.$uci.apply()
+    },
     addClient (name, role) {
       const sid = name + '_client'
       const currentSectionNames = this.sections.map(s => s['.name'])
@@ -232,20 +253,7 @@ export default {
         this.$message.info(`Instance ${name} already exists`)
         return
       } else {
-        this.$spin()
-        this.$uci.add('openvpn', 'openvpn', sid)
-        this.$uci.save().then(() => {
-          this.$uci.apply().then(() => {
-            this.$spin(false)
-          })
-        })
-        this.$uci.set('openvpn', name + '_client', 'type', role)
-        this.$uci.set('openvpn', name + '_client', '_name', name)
-        this.$uci.set('openvpn', name + '_client', '_auth', 'tls')
-        this.$uci.set('openvpn', name + '_client', 'enable', '0')
-        // this.$uci.set('openvpn', name + '_client', 'enable', '1')
-        this.$uci.save()
-        this.$uci.apply()
+        this.addDefaultValues (name, role, sid)
 
         this.latestSection = sid
         this.beforeAddEdit(name, this.latestSection, role)
@@ -260,20 +268,7 @@ export default {
         this.$message.info('There can only be a single server instance')
         return
       } else {
-        this.$spin()
-        this.$uci.add('openvpn', 'openvpn', sid)
-        this.$uci.save().then(() => {
-          this.$uci.apply().then(() => {
-            this.$spin(false)
-          })
-        })
-        this.$uci.set('openvpn', sid, 'type', role)
-        this.$uci.set('openvpn', sid, '_name', name)
-        this.$uci.set('openvpn', sid, '_auth', 'tls')
-        this.$uci.set('openvpn', sid, 'enable', '0')
-        // this.$uci.set('openvpn', name + '_client', 'enable', '1')
-        this.$uci.save()
-        this.$uci.apply()
+        this.addDefaultValues (name, role, sid)
 
         this.latestSection = sid
         this.beforeAddEdit(name, this.latestSection, role)
@@ -284,38 +279,10 @@ export default {
     },
     add (name, role) {
       if (role === 'client') {
-        // alert('adding client')
         this.addClient(name, role)
       } else if (role === 'server') {
-        // alert('adding server')
         this.addServer(name, role)
-        // this.beforeAddEdit(name, latestSection, role)
       }
-      // const sid = name + '_client'
-      // const currentSectionNames = this.sections.map(s => s['.name'])
-      // if (currentSectionNames.includes(sid) === true) {
-      //   this.$message.info(`Instance ${name} already exists`)
-      //   return
-      // } else {
-      //   this.$spin()
-      //   this.$uci.add('openvpn', 'openvpn', sid)
-      //   this.$uci.save().then(() => {
-      //     this.$uci.apply().then(() => {
-      //       this.$spin(false)
-      //     })
-      //   })
-      //   this.$uci.set('openvpn', name + '_client', 'type', role)
-      //   this.$uci.set('openvpn', name + '_client', '_name', name)
-      //   this.$uci.set('openvpn', name + '_client', '_auth', 'tls')
-      //   this.$uci.set('openvpn', name + '_client', 'enable', '0')
-      //   // this.$uci.set('openvpn', name + '_client', 'enable', '1')
-      //   this.$uci.save()
-      //   this.$uci.apply()
-
-      //   this.latestSection = sid
-      // }
-      // this.clearCreateInstanceForm()
-      console.log('add method was ran')
     },
     edit (sectionName, type) {
       // this.proto = this.$uci.get('openvpn', sectionName, 'proto')
