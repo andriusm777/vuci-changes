@@ -72,7 +72,6 @@
       </a-col>
     </a-row>
 
-    <!-- apsirasyti globalu upload component -->
     <a-modal :footer="null" :title="modalTitle" v-model="editModal" :width="800">
       <vuci-form uci-config="openvpn" v-if="editModal">
         <vuci-named-section :name="editorSection" v-slot="{ s }">
@@ -134,6 +133,7 @@ export default {
       latestSection: '',
       statusValueSingleItem: '',
       networkLanIp: '',
+      testas: '192.169.1.3',
       // networkInterfaces: '',
       // sectionsNetwork: [],
       sections: [],
@@ -191,11 +191,14 @@ export default {
       //   alert('if v equals to lan ip statement working')
       // }
     },
-    validateLanIp (v) {
-      alert(`value of v is ${v}`)
-      if (v.toString() === this.networkLanIp) {
-        alert(`running statement ${v} is equals to ${this.networkLanIp}`)
-        return `Value must not match the IP of the lan ip ${this.networkLanIp}`
+    validateLanIp (value) {
+      // this.testas = value
+      // alert(`value is ${value}`)
+      if (value === this.networkLanIp) {
+        // alert(`running statement ${value} is equals to ${this.networkLanIp}`)
+        return `Value must not match the lan Ip ${this.networkLanIp}`
+      } else if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(value) === false) {
+        return 'Entered value must be a valid IPv4 address'
       }
     },
     del (name) {
@@ -253,8 +256,7 @@ export default {
         this.$message.info(`Instance ${name} already exists`)
         return
       } else {
-        this.addDefaultValues (name, role, sid)
-
+        this.addDefaultValues(name, role, sid)
         this.latestSection = sid
         this.beforeAddEdit(name, this.latestSection, role)
       }
@@ -268,8 +270,7 @@ export default {
         this.$message.info('There can only be a single server instance')
         return
       } else {
-        this.addDefaultValues (name, role, sid)
-
+        this.addDefaultValues(name, role, sid)
         this.latestSection = sid
         this.beforeAddEdit(name, this.latestSection, role)
       }
