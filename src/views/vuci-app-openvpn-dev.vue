@@ -17,6 +17,12 @@
               <a-tag v-if="setStatusName(record.enable) === 'Enabled'" color="blue">
                 {{setStatusName(record.enable)}}
               </a-tag>
+              <a-tag v-if="setStatusName(record.enable) === 'Active'" color="green">
+                {{setStatusName(record.enable)}}
+              </a-tag>
+              <a-tag v-if="setStatusName(record.enable) === 'Inactive'" color="orange">
+                {{setStatusName(record.enable)}}
+              </a-tag>
               <a-tag v-if="setStatusName(record.enable) === 'Disabled'" color="red">
                 {{setStatusName(record.enable)}}
               </a-tag>
@@ -138,6 +144,7 @@ export default {
       remoteNetworkMask: '',
       maskNumberConverted: '',
       testas: '',
+      ubusData: {},
       // networkInterfaces: '',
       // sectionsNetwork: [],
       sections: [],
@@ -482,6 +489,46 @@ export default {
     //     this.testas = Math.abs((+ip[1] << 24) + (+ip[2] << 16) + (+ip[3] << 8) + (+ip[4]))
     //   }
     // }
+    getServiceList () {
+      // this.$ubus.call('ser', 'get').then(r => {
+      // this.count = r.count;
+      // })
+      this.$rpc.ubus('service', 'list', 'call').then(r => {
+        // this.$message.success(this.$t('Send signal to', { signum, pid }), 1)
+        this.ubusData = r
+      })
+    },
+    ip2longInt (ip) {
+      var components
+
+      if(components = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)) {
+        var iplong = 0
+        var power = 1
+        for (var i = 4; i>=1; i-=1) {
+          iplong += power * parseInt(components[i])
+          power *= 256
+        }
+        return iplong
+      } else {
+        return -1
+      }
+    },
+    maskGetRemaining (ip) {
+      var ip = ip.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
+      if (ip) {
+        return Math.abs((+ip[1]<<24) + (+ip[2]<<16) + (+ip[3]<<8) + (+ip[4]))
+      }
+    },
+    testLongIp () {
+      const ip1 = '192.168.1.1'
+      const ip1toInt = this.ip2longInt(ip1)
+      alert('converted ip is ' + ip1toInt)
+    },
+    testGetMask () {
+      const mask1 = '255.255.255.0'
+      const mask1Converted = this.maskGetRemaining(mask1)
+      alert('converted mask is ' + mask1Converted)
+    }
   },
   computed: {
     lanMaskNumberConverted () {
@@ -498,7 +545,8 @@ export default {
     },
     uploadedFileWithSectionName () {
       return 'cbid.openvpn.' + this.editorSection + '.' + this.uploadedFileName
-    }
+    },
+    
   },
   // updated () {
   //   this.latestObject ()
@@ -509,6 +557,9 @@ export default {
     // this.maskNumberTest()
     // this.maskNumber()
     this.checkingIpNetworkTest()
+    this.getServiceList()
+    this.testLongIp()
+    this.testGetMask()
   }
 
 }
