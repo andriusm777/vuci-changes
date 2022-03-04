@@ -302,6 +302,16 @@ export default {
       this.$uci.set('openvpn', sid, 'client', '1')
       this.$uci.set('openvpn', sid, 'resolv_retry', 'infinite')
     },
+    addDefaultServerValues (name, role, sid) {
+      // DEFAULT AUTH TLS OPTION
+      this.$uci.set('openvpn', sid, '_tls_cipher', 'all')
+      this.$uci.set('openvpn', sid, '_tls_auth', 'none')
+      this.$uci.set('openvpn', sid, 'auth', 'sha1')
+      this.$uci.set('openvpn', sid, 'persist_tun', '1')
+      this.$uci.set('openvpn', sid, 'dev', 'tun_s_' + name)
+      this.$uci.set('openvpn', sid, 'tls_server', '1')
+      this.$uci.set('openvpn', sid, 'upload_files', '0')
+    },
     addClient (name, role) {
       const sid = name + '_client'
       const currentSectionNames = this.sections.map(s => s['.name'])
@@ -342,6 +352,7 @@ export default {
           })
         })
         this.addDefaultGlobalValues(name, role, sid)
+        this.addDefaultServerValues(name, role, sid)
         this.$uci.save()
         this.$uci.apply()
         this.latestSection = sid
@@ -476,7 +487,10 @@ export default {
     lanMaskNumberConverted () {
       const ip = this.networkLanMask.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
       if (ip) {
-        return Math.abs((+ip[1] << 24) + (+ip[2] << 16) + (+ip[3] << 8) + (+ip[4]))
+        ip = (+ip[1] << 24) + (+ip[2] << 16) + (+ip[3] << 8) + (+ip[4])
+        return Math.abs(ip)
+      } else {
+        return null
       }
     },
     modalTitle () {
