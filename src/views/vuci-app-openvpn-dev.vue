@@ -83,7 +83,7 @@
           <!-- CLIENT -->
           <div v-if="editorType === 'client'">
             <!-- TLS -->
-            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" :rules="validateLanIp" placeholder="192.168.1.1" depend="_auth == 'tls'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" @change="getValue" :rules="validateLanIp" placeholder="192.168.1.1" depend="_auth == 'tls'" />
             <vuci-form-item-input :uci-section="s" :label="'Remote network Netmask'" name="remote_netmask" rules="netmask4" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
             <vuci-form-upload :uci-section="s" :label="'Certificate authority'" name="ca" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
             <vuci-form-upload :uci-section="s" :label="'Client certificate'" name="cert" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
@@ -133,7 +133,11 @@ export default {
       latestSection: '',
       statusValueSingleItem: '',
       networkLanIp: '',
-      testas: '192.169.1.3',
+      networkLanMask: '',
+      remoteNetworkIp: '',
+      remoteNetworkMask: '',
+      maskNumberConverted: '',
+      testas: '',
       // networkInterfaces: '',
       // sectionsNetwork: [],
       sections: [],
@@ -173,7 +177,7 @@ export default {
     // instanceCreate () {
     //   this.$uci.sections('openvpn', this.formInline.name)
     // },
-    async getLanIp () {
+    async getLanNetwork () {
       // vuci get value of lan ip
       // lan ip equals to some const
       // if v equals to lan ip return
@@ -186,6 +190,7 @@ export default {
       await this.$uci.load('network')
       // this.sectionsNetwork = this.$uci.sections('network', 'interface')
       this.networkLanIp = this.$uci.get('network', 'lan', 'ipaddr')
+      this.networkLanMask = this.$uci.get('network', 'lan', 'netmask')
       // const v = '192.168.1.1'
       // if (v === this.networkLanIp) {
       //   alert('if v equals to lan ip statement working')
@@ -200,6 +205,9 @@ export default {
       } else if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(value) === false) {
         return 'Entered value must be a valid IPv4 address'
       }
+
+      // if (this.remoteNetworkMask !== '') {
+      // }
     },
     del (name) {
       this.$spin()
@@ -211,6 +219,49 @@ export default {
         })
       })
     },
+    getValue (value) {
+      setTimeout(() => {
+        const name = value['_props'].uciSection['.name']
+        this.remoteNetworkIp = value.form[name + '_' + 'remote_ip']
+        this.remoteNetworkMask = value.form[name + '_' + 'remote_netmask']
+        console.log(value.form[name + '_' + 'remote_ip'])
+        console.log(value.form[name + '_' + 'remote_netmask'])
+        console.log(value)
+        const array = Array.from(this.remoteNetworkIp.split('.'), Number)
+        console.log(array)
+        // if (this.remoteNetworkMask === '') {
+        // }
+      }, 2500)
+    },
+    // ipChecker () {
+    //   var ip2long = function(ip){
+    //   var components
+
+    //   if(components = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/))
+    //   {
+    //       var iplong = 0;
+    //       var power  = 1;
+    //       for(var i=4; i>=1; i-=1)
+    //       {
+    //           iplong += power * parseInt(components[i])
+    //           power  *= 256
+    //       }
+    //       return iplong
+    //   }
+    //   else return -1
+    //   }
+
+    //   var inSubNet = function(ip, subnet)
+    //   {
+    //   var mask, base_ip, long_ip = ip2long(ip);
+    //   if( (mask = subnet.match(/^(.*?)\/(\d{1,2})$/)) && ((base_ip=ip2long(mask[1])) >= 0) )
+    //   {
+    //       var freedom = Math.pow(2, 32 - parseInt(mask[2]))
+    //       return (long_ip > base_ip) && (long_ip < base_ip + freedom - 1)
+    //   }
+    //   else return false
+    //   }
+    // }
     // delUploads (name) {
     //   if (this.auth === 'tls') {
     //     this.$spin()
@@ -228,14 +279,7 @@ export default {
     //     })
     //   })
     // },
-    addDefaultValues (name, role, sid) {
-      this.$spin()
-      this.$uci.add('openvpn', 'openvpn', sid)
-      this.$uci.save().then(() => {
-        this.$uci.apply().then(() => {
-          this.$spin(false)
-        })
-      })
+    addDefaultGlobalValues (name, role, sid) {
       this.$uci.set('openvpn', sid, 'type', role)
       this.$uci.set('openvpn', sid, '_name', name)
       this.$uci.set('openvpn', sid, '_auth', 'tls')
@@ -246,8 +290,17 @@ export default {
       this.$uci.set('openvpn', sid, 'verb', '5')
       this.$uci.set('openvpn', sid, 'proto', 'udp')
       this.$uci.set('openvpn', sid, 'cipher', 'BF-CBC')
-      this.$uci.save()
-      this.$uci.apply()
+    },
+    addDefaultClientValues (name, role, sid) {
+      // DEFAULT AUTH TLS OPTION
+      this.$uci.set('openvpn', sid, '_tls_cipher', 'all')
+      this.$uci.set('openvpn', sid, '_tls_auth', 'none')
+      this.$uci.set('openvpn', sid, 'nobind', '1')
+      this.$uci.set('openvpn', sid, 'auth', 'sha1')
+      this.$uci.set('openvpn', sid, 'persist_tun', '1')
+      this.$uci.set('openvpn', sid, 'dev', 'tun_c_' + name)
+      this.$uci.set('openvpn', sid, 'client', '1')
+      this.$uci.set('openvpn', sid, 'resolv_retry', 'infinite')
     },
     addClient (name, role) {
       const sid = name + '_client'
@@ -256,7 +309,18 @@ export default {
         this.$message.info(`Instance ${name} already exists`)
         return
       } else {
-        this.addDefaultValues(name, role, sid)
+        this.$spin()
+        this.$uci.add('openvpn', 'openvpn', sid)
+        this.$uci.save().then(() => {
+          this.$uci.apply().then(() => {
+            this.$spin(false)
+          })
+        })
+        this.addDefaultGlobalValues(name, role, sid)
+        this.addDefaultClientValues(name, role, sid)
+        this.$uci.save()
+        this.$uci.apply()
+        
         this.latestSection = sid
         this.beforeAddEdit(name, this.latestSection, role)
       }
@@ -270,7 +334,16 @@ export default {
         this.$message.info('There can only be a single server instance')
         return
       } else {
-        this.addDefaultValues(name, role, sid)
+        this.$spin()
+        this.$uci.add('openvpn', 'openvpn', sid)
+        this.$uci.save().then(() => {
+          this.$uci.apply().then(() => {
+            this.$spin(false)
+          })
+        })
+        this.addDefaultGlobalValues(name, role, sid)
+        this.$uci.save()
+        this.$uci.apply()
         this.latestSection = sid
         this.beforeAddEdit(name, this.latestSection, role)
       }
@@ -351,12 +424,61 @@ export default {
       // })
       await this.$uci.load('openvpn')
       this.sections = this.$uci.sections('openvpn', 'openvpn')
-    }
+    },
+    // doesIpBelongToMask () {
+    //   networkLanMask
+    //   networkLanIp
+    //   remoteNetworkIp
+    // },
+    // maskNumber () {
+    //   const ip = this.networkLanMask.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
+    //   if (ip) {
+    //     this.maskNumberConverted = (+ip[1] << 24) + (+ip[2] << 16) + (+ip[3] << 8) + (+ip[4])
+    //   }
+    //   alert(this.maskNumberConverted)
+    //   // return null
+    // },
+    // maskNumberTest () {
+    //   this.maskNumber(('192.168.1.13') & this.maskNumber('255.255.255.0') === this.maskNumber('192.168.1.200'))
+    // },
     // getNetworkLan (v) {
+    ip2num (ip) {
+      var d = ip.split(".")
+      var num = 0
+      num += Number(d[0]) * Math.pow(256, 3)
+      num += Number(d[1]) * Math.pow(256, 2)
+      num += Number(d[2]) * Math.pow(256, 1)
+      num += Number(d[3])
+      return num
+    },
+    // }
+    checkingIpNetworkTest () {
+      const lanIpNum = this.ip2num(this.networkLanIp)
+      const remoteIpNum = this.ip2num('192.168.1.13')
+      // const remoteIpNum = ip2num(this.remoteNetworkIp)
 
+      // const lanMaskConverted = ip2num(this.remoteNetworkMask)
+      // if ( lanIpNum <= remoteIpNum && remoteIpNum < lanIpNum + this.lanMaskNumberConverted - 1)
+      if ( remoteIpNum >= lanIpNum && remoteIpNum < lanIpNum + this.lanMaskNumberConverted - 1) {
+        // return true
+        alert('error - remote ip is within local network ' + this.lanMaskNumberConverted)
+      } else alert('success - remote ip is valid ' + this.lanMaskNumberConverted)
+      // alert(lanMaskNumberConverted)
+    },
+    // lanMaskNumberConverted () {
+    //   const ip = this.networkLanMask.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
+    //   if (ip) {
+    //     this.testas = Math.abs((+ip[1] << 24) + (+ip[2] << 16) + (+ip[3] << 8) + (+ip[4]))
+    //   }
     // }
   },
   computed: {
+    lanMaskNumberConverted () {
+      const ip = this.networkLanMask.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
+      if (ip) {
+        return Math.abs((+ip[1] << 24) + (+ip[2] << 16) + (+ip[3] << 8) + (+ip[4]))
+      }
+    },
     modalTitle () {
       return `Configure ${this.editorSection}`
     },
@@ -369,7 +491,10 @@ export default {
   // },
   created () {
     this.load()
-    this.getLanIp()
+    this.getLanNetwork()
+    // this.maskNumberTest()
+    // this.maskNumber()
+    this.checkingIpNetworkTest()
   }
 
 }
