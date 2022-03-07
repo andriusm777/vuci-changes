@@ -206,15 +206,16 @@ export default {
     validateLanIp (value) {
       // this.testas = value
       // alert(`value is ${value}`)
-      if (value === this.networkLanIp) {
-        // alert(`running statement ${value} is equals to ${this.networkLanIp}`)
-        return `Value must not match the lan Ip ${this.networkLanIp}`
+      const lanIpInt = this.ip2num(this.networkLanIp) - 1
+      const lanMaskConverted = this.maskGetRemaining(this.networkLanMask) - 1
+      const remoteIpInt = this.ip2num(value)
+      // debugger
+
+      if (remoteIpInt >= lanIpInt && remoteIpInt <= (lanIpInt + lanMaskConverted)) {
+        return `IP address ${value} must not fall within the lan's range`
       } else if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(value) === false) {
         return 'Entered value must be a valid IPv4 address'
       }
-
-      // if (this.remoteNetworkMask !== '') {
-      // }
     },
     del (name) {
       this.$spin()
@@ -228,6 +229,7 @@ export default {
     },
     getValue (value) {
       setTimeout(() => {
+        // eslint-disable-next-line
         const name = value['_props'].uciSection['.name']
         this.remoteNetworkIp = value.form[name + '_' + 'remote_ip']
         this.remoteNetworkMask = value.form[name + '_' + 'remote_netmask']
@@ -337,7 +339,6 @@ export default {
         this.addDefaultClientValues(name, role, sid)
         this.$uci.save()
         this.$uci.apply()
-        
         this.latestSection = sid
         this.beforeAddEdit(name, this.latestSection, role)
       }
@@ -443,25 +444,8 @@ export default {
       await this.$uci.load('openvpn')
       this.sections = this.$uci.sections('openvpn', 'openvpn')
     },
-    // doesIpBelongToMask () {
-    //   networkLanMask
-    //   networkLanIp
-    //   remoteNetworkIp
-    // },
-    // maskNumber () {
-    //   const ip = this.networkLanMask.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
-    //   if (ip) {
-    //     this.maskNumberConverted = (+ip[1] << 24) + (+ip[2] << 16) + (+ip[3] << 8) + (+ip[4])
-    //   }
-    //   alert(this.maskNumberConverted)
-    //   // return null
-    // },
-    // maskNumberTest () {
-    //   this.maskNumber(('192.168.1.13') & this.maskNumber('255.255.255.0') === this.maskNumber('192.168.1.200'))
-    // },
-    // getNetworkLan (v) {
     ip2num (ip) {
-      var d = ip.split(".")
+      var d = ip.split('.')
       var num = 0
       num += Number(d[0]) * Math.pow(256, 3)
       num += Number(d[1]) * Math.pow(256, 2)
@@ -469,20 +453,16 @@ export default {
       num += Number(d[3])
       return num
     },
-    // }
-    checkingIpNetworkTest () {
-      const lanIpNum = this.ip2num(this.networkLanIp)
-      const remoteIpNum = this.ip2num('192.168.1.13')
-      // const remoteIpNum = ip2num(this.remoteNetworkIp)
+    isRemoteIpValid (remoteIp) {
+      const lanIpInt = this.ip2num(this.networkLanIp)
+      const lanMaskConverted = this.maskGetRemaining(this.networkLanMask) - 1
+      const remoteIpInt = this.ip2num(remoteIp)
 
-      // const lanMaskConverted = ip2num(this.remoteNetworkMask)
-      // if ( lanIpNum <= remoteIpNum && remoteIpNum < lanIpNum + this.lanMaskNumberConverted - 1)
-      if ( remoteIpNum >= lanIpNum && remoteIpNum < lanIpNum + this.lanMaskNumberConverted - 1) {
-        // return true
-        alert('error - remote ip is within local network ' + this.lanMaskNumberConverted)
-      } else alert('success - remote ip is valid ' + this.lanMaskNumberConverted)
-      // alert(lanMaskNumberConverted)
+      if (remoteIpInt >= lanIpInt && remoteIpInt <= (lanIpInt + lanMaskConverted)) {
+        return `IP address ${remoteIp} must not fall within the local network's range`
+      }
     },
+    // }
     // lanMaskNumberConverted () {
     //   const ip = this.networkLanMask.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
     //   if (ip) {
@@ -500,11 +480,11 @@ export default {
     },
     ip2longInt (ip) {
       var components
-
-      if(components = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)) {
+      // eslint-disable-next-line
+      if (components = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)) {
         var iplong = 0
         var power = 1
-        for (var i = 4; i>=1; i-=1) {
+        for (var i = 4; i >= 1; i -= 1) {
           iplong += power * parseInt(components[i])
           power *= 256
         }
@@ -514,9 +494,10 @@ export default {
       }
     },
     maskGetRemaining (ip) {
+      // eslint-disable-next-line
       var ip = ip.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
       if (ip) {
-        return Math.abs((+ip[1]<<24) + (+ip[2]<<16) + (+ip[3]<<8) + (+ip[4]))
+        return Math.abs((+ip[1] << 24) + (+ip[2] << 16) + (+ip[3] << 8) + (+ip[4]))
       }
     },
     testLongIp () {
@@ -531,22 +512,12 @@ export default {
     }
   },
   computed: {
-    lanMaskNumberConverted () {
-      const ip = this.networkLanMask.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/)
-      if (ip) {
-        ip = (+ip[1] << 24) + (+ip[2] << 16) + (+ip[3] << 8) + (+ip[4])
-        return Math.abs(ip)
-      } else {
-        return null
-      }
-    },
     modalTitle () {
       return `Configure ${this.editorSection}`
     },
     uploadedFileWithSectionName () {
       return 'cbid.openvpn.' + this.editorSection + '.' + this.uploadedFileName
-    },
-    
+    }
   },
   // updated () {
   //   this.latestObject ()
@@ -554,12 +525,7 @@ export default {
   created () {
     this.load()
     this.getLanNetwork()
-    // this.maskNumberTest()
-    // this.maskNumber()
-    this.checkingIpNetworkTest()
     this.getServiceList()
-    this.testLongIp()
-    this.testGetMask()
   }
 
 }
