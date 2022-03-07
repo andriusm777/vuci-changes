@@ -145,6 +145,8 @@ export default {
       maskNumberConverted: '',
       testas: '',
       ubusData: {},
+      compRemoteFirstIp: '',
+      compRemoteLastIp: '',
       // networkInterfaces: '',
       // sectionsNetwork: [],
       sections: [],
@@ -509,6 +511,52 @@ export default {
       const mask1 = '255.255.255.0'
       const mask1Converted = this.maskGetRemaining(mask1)
       alert('converted mask is ' + mask1Converted)
+    },
+    getIpRangeFromAddressAndNetmask(ip, netmask) {
+      var ipaddress = ip.split('.')
+      var netmaskblocks = ['0','0','0','0']
+      if (!/\d+\.\d+\.\d+\.\d+/.test(netmask)) {
+        netmaskblocks = ('1'.repeat(parseInt(netmask, 10)) + '0'.repeat(32 - parseInt(netmask, 10))).match(/.{1,8}/g)
+        netmaskblocks = netmaskblocks.map(function(el) {
+          return parseInt(el, 2)
+        })
+      } else {
+        netmaskblocks = netmask.split('.').map(function (el) {
+          return parseInt(el, 10)
+        })
+      }
+      var invertedNetmaskBlocks = netmaskblocks.map(function(el) {
+        return el ^ 255
+      })
+      var baseAddress = ipaddress.map(function(block, idx) {
+        return block & netmaskblocks[idx]
+      })
+      var broadcastAddress = ipaddress.map(function(block, idx) {
+        return block | invertedNetmaskBlocks[idx]
+      })
+
+      this.compRemoteFirstIp = baseAddress.join('.')
+      this.compRemoteLastIp = broadcastAddress.join('.')
+      // return [baseAddress.join('.'), broadcastAddress.join('.')]
+    },
+    // getIpRangeFromAddressAndNetmaskAlert () {
+    //   alert(this.getIpRangeFromAddressAndNetmask('192.168.1.50', '255.255.255.0'))
+    // },
+    testRemoteMask () {
+      const remoteIp = '192.168.1.50'
+      const remoteIpInt = this.ip2num(remoteIp)
+      const remoteMask = '255.255.255.0'
+      this.getIpRangeFromAddressAndNetmask(remoteIp, remoteMask)
+      const remoteNetworkFirstIp = this.ip2num(this.compRemoteFirstIp)
+      const remoteNetworkLastIp = this.ip2num(this.compRemoteLastIp)
+      // const remoteMaskConverted = this.maskGetRemaining('255.255.255.0') - 1
+      // const remoteNetworkFirstIp = remoteIpInt & remoteMaskConverted
+      // debugger
+      if (remoteIpInt >= remoteNetworkFirstIp && remoteIpInt <= remoteNetworkLastIp) {
+        alert(`remote ip is compatible with the remote subnet address`)
+      } else {
+        alert(`remote ip is outside the bounds of the remote subnet`)
+      }
     }
   },
   computed: {
@@ -526,6 +574,8 @@ export default {
     this.load()
     this.getLanNetwork()
     this.getServiceList()
+    this.testRemoteMask()
+    // this.getIpRangeFromAddressAndNetmaskAlert()
   }
 
 }
