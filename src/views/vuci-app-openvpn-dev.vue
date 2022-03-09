@@ -14,17 +14,17 @@
           </template>
           <template v-slot:status="record">
             <span>
-              <a-tag v-if="setStatusName(record.enable) === 'Enabled'" color="blue">
-                {{setStatusName(record.enable)}}
+              <a-tag v-if="setStatusName(record['.name'], record.enable) === 'Enabled'" color="blue">
+                {{setStatusName(record['.name'], record.enable)}}
               </a-tag>
-              <a-tag v-if="setStatusName(record.enable) === 'Active'" color="green">
-                {{setStatusName(record.enable)}}
+              <a-tag v-if="setStatusName(record['.name'], record.enable) === 'Active'" color="green">
+                {{setStatusName(record['.name'], record.enable)}}
               </a-tag>
-              <a-tag v-if="setStatusName(record.enable) === 'Inactive'" color="orange">
-                {{setStatusName(record.enable)}}
+              <a-tag v-if="setStatusName(record['.name'], record.enable) === 'Inactive'" color="orange">
+                {{setStatusName(record['.name'], record.enable)}}
               </a-tag>
-              <a-tag v-if="setStatusName(record.enable) === 'Disabled'" color="red">
-                {{setStatusName(record.enable)}}
+              <a-tag v-if="setStatusName(record['.name'], record.enable) === 'Disabled'" color="red">
+                {{setStatusName(record['.name'], record.enable)}}
               </a-tag>
             </span>
           </template>
@@ -89,14 +89,15 @@
           <!-- CLIENT -->
           <div v-if="editorType === 'client'">
             <!-- TLS -->
-            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" @change="getValue" :rules="validateLanIp" placeholder="192.168.1.1" depend="_auth == 'tls'" />
-            <vuci-form-item-input :uci-section="s" :label="'Remote network Netmask'" name="remote_netmask" rules="netmask4" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
+            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" @change="getValue" :rules="validateLanIp" placeholder="192.168.1.0" depend="_auth == 'tls'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote network Netmask'" name="remote_netmask" :rules="validateRemoteMask" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
             <vuci-form-upload :uci-section="s" :label="'Certificate authority'" name="ca" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
             <vuci-form-upload :uci-section="s" :label="'Client certificate'" name="cert" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
             <vuci-form-upload :uci-section="s" :label="'Client key'" name="key" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
             <!-- STATIC KEY -->
             <vuci-form-item-input :uci-section="s" :label="'Local tunnel endpoint IP'" name="local_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
             <vuci-form-item-input :uci-section="s" :label="'Remote tunnel endpoint IP'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="network_ip" rules="ipaddr" placeholder="192.168.1.0" depend="_auth == 'skey'" />
             <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
             <vuci-form-upload :uci-section="s" :label="'Static key'" name="secret" depend="_auth == 'skey'" :sectionNaming="uploadedFileWithSectionName"/>
           </div>
@@ -112,7 +113,7 @@
               <!-- STATIC KEY -->
             <vuci-form-item-input :uci-section="s" :label="'Local tunnel endpoint IP'" name="local_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
             <vuci-form-item-input :uci-section="s" :label="'Remote tunnel endpoint IP'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
-            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="network_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="network_ip" rules="ipaddr" placeholder="192.168.1.0" depend="_auth == 'skey'" />
             <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
             <vuci-form-upload :uci-section="s" :label="'Static key'" name="secret" depend="_auth == 'skey'" :sectionNaming="uploadedFileWithSectionName"/>
           </div>
@@ -180,6 +181,30 @@ export default {
     load: { time: 1500, autostart: true, immediate: true, repeat: true }
   },
   methods: {
+    isIPv4Addr (ip) {
+      const iPv4RegEx = /^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/
+      if (iPv4RegEx.test(ip)) {
+        return true
+      } else {
+        return false
+      }
+    },
+    // isNotCharNorSpecial (ip) {
+    //   const charAndSpecialRegEx = /^[a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]*$/
+    //   if (charAndSpecialRegEx.test(ip)) {
+    //     return true
+    //   } else {
+    //     return false
+    //   }
+    // },
+    isMask (mask) {
+      const netMaskRegEx = /^((128|192|224|240|248|252|254)\.0\.0\.0)|(255\.(((0|128|192|224|240|248|252|254)\.0\.0)|(255\.(((0|128|192|224|240|248|252|254)\.0)|255\.(0|128|192|224|240|248|252|254)))))$/
+      if (netMaskRegEx.test(mask)) {
+        return true
+      } else {
+        return false
+      }
+    },
     // handleSubmit (e) {
     //   console.log(this.formInline)
     // },
@@ -215,8 +240,37 @@ export default {
 
       if (remoteIpInt >= lanIpInt && remoteIpInt <= (lanIpInt + lanMaskConverted)) {
         return `IP address ${value} must not fall within the lan's range`
-      } else if (/^(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(value) === false) {
+      } else if (this.isIPv4Addr(value) === false) {
         return 'Entered value must be a valid IPv4 address'
+      }
+    },
+    testNetmaskIsIP () {
+      const value = '255.255.255.255'
+      if (this.isIPv4Addr(value) === false) {
+        alert(`${value} is not an Ip`)
+      } else {
+        alert(`${value} is an Ip OK`)
+      }
+    },
+    validateRemoteMask (value) {
+      // const remoteIp = '192.168.1.254'
+      const remoteIp = this.remoteNetworkIp
+      const remoteIpInt = this.ip2num(remoteIp)
+      const remoteMask = value
+      // const remoteMask = mask
+      this.getIpRangeFromAddressAndNetmask(remoteIp, remoteMask)
+      const remoteNetworkFirstIp = this.ip2num(this.compRemoteFirstIp)
+      const remoteNetworkLastIp = this.ip2num(this.compRemoteLastIp)
+      // debugger
+      if (this.isIPv4Addr(value) === false || this.isNotCharNorSpecial(value) === false) {
+        return 'Entered value is not a valid netmask'
+      } else if (remoteIpInt <= remoteNetworkFirstIp || remoteIpInt >= remoteNetworkLastIp) {
+        return `Incompatible subnet for remote IP ${remoteIp}`
+      }
+      if (remoteIpInt <= remoteNetworkFirstIp || remoteIpInt >= remoteNetworkLastIp) {
+        return `Incompatible subnet for remote IP ${remoteIp}`
+      } else if (this.isIPv4Addr(value) === false) {
+        return 'Entered value is not a valid netmask'
       }
     },
     del (name) {
@@ -242,7 +296,7 @@ export default {
         console.log(array)
         // if (this.remoteNetworkMask === '') {
         // }
-      }, 2500)
+      }, 1000)
     },
     // ipChecker () {
     //   var ip2long = function(ip){
@@ -401,14 +455,52 @@ export default {
         this.edit(latestSection, role)
       }
     },
-    setStatusName (statusValue) {
+    setStatusName (fullInstanceName, instanceEnableValue) {
       let status = ''
-      if (statusValue === '1') {
-        status = 'Enabled'
+      if (Object.prototype.hasOwnProperty.call(this.ubusData, fullInstanceName)) {
+        if (instanceEnableValue === '1' && this.ubusData[fullInstanceName].running === true) {
+          status = 'Active'
+        } else if (instanceEnableValue === '1' && this.ubusData[fullInstanceName].running === false) {
+          status = 'Inactive'
+        }
       } else {
-        status = 'Disabled'
+        if (instanceEnableValue === '0') {
+          status = 'Disabled'
+        }
       }
+      // if (instanceEnableValue === '1' && this.ubusData[fullInstanceName].running === true ) {
+      //   status = 'Active'
+      // } else if (instanceEnableValue === '0') {
+      //   status = 'Disabled'
+      // } else if (instanceEnableValue === '1' && Object.prototype.hasOwnProperty.call(this.ubusData, fullInstanceName) === false) {
+      //   status = 'Enabled'
+      // } else if (instanceEnableValue === '1' && this.ubusData[fullInstanceName].running === false) {
+      //   status = 'Inactive'
+      // }
       return status
+    },
+    testObjectField () {
+      // var name = 'testing_client'
+      // for (name in this.ubusData) {
+      //   alert('for loop running')
+      //   if (this.ubusData.hasOwnProperty(name)) {
+      //     alert('field found')
+      //   } else {
+      //     alert('no field')
+      //   }
+      // }
+      setTimeout(() => {
+        // if (this.ubusData.hasOwnProperty('testing3_client')) {
+        // alert('field found')
+        // } else {
+        //   alert('there is no such field')
+        // }
+        if (Object.prototype.hasOwnProperty.call(this.ubusData, 'testing_client')) {
+          alert('field found')
+        } else {
+          alert('there is no such field')
+        }
+      }, 1000)
     },
     actionEnable (name) {
       // eslint-disable-next-line
@@ -472,12 +564,9 @@ export default {
     //   }
     // }
     getServiceList () {
-      // this.$ubus.call('ser', 'get').then(r => {
-      // this.count = r.count;
-      // })
-      this.$rpc.ubus('service', 'list', 'call').then(r => {
-        // this.$message.success(this.$t('Send signal to', { signum, pid }), 1)
-        this.ubusData = r
+      this.$rpc.call('ubus', 'call', { object: 'service', method: 'list' }).then(r => {
+        this.ubusData = r.openvpn.instances
+        console.log(this.ubusData)
       })
     },
     ip2longInt (ip) {
@@ -512,12 +601,12 @@ export default {
       const mask1Converted = this.maskGetRemaining(mask1)
       alert('converted mask is ' + mask1Converted)
     },
-    getIpRangeFromAddressAndNetmask(ip, netmask) {
+    getIpRangeFromAddressAndNetmask (ip, netmask) {
       var ipaddress = ip.split('.')
-      var netmaskblocks = ['0','0','0','0']
+      var netmaskblocks = ['0', '0', '0', '0']
       if (!/\d+\.\d+\.\d+\.\d+/.test(netmask)) {
         netmaskblocks = ('1'.repeat(parseInt(netmask, 10)) + '0'.repeat(32 - parseInt(netmask, 10))).match(/.{1,8}/g)
-        netmaskblocks = netmaskblocks.map(function(el) {
+        netmaskblocks = netmaskblocks.map(function (el) {
           return parseInt(el, 2)
         })
       } else {
@@ -525,13 +614,13 @@ export default {
           return parseInt(el, 10)
         })
       }
-      var invertedNetmaskBlocks = netmaskblocks.map(function(el) {
+      var invertedNetmaskBlocks = netmaskblocks.map(function (el) {
         return el ^ 255
       })
-      var baseAddress = ipaddress.map(function(block, idx) {
+      var baseAddress = ipaddress.map(function (block, idx) {
         return block & netmaskblocks[idx]
       })
-      var broadcastAddress = ipaddress.map(function(block, idx) {
+      var broadcastAddress = ipaddress.map(function (block, idx) {
         return block | invertedNetmaskBlocks[idx]
       })
 
@@ -543,19 +632,19 @@ export default {
     //   alert(this.getIpRangeFromAddressAndNetmask('192.168.1.50', '255.255.255.0'))
     // },
     testRemoteMask () {
-      const remoteIp = '192.168.1.50'
+      const remoteIp = '192.168.1.254'
+      // const remoteIp = this.remoteNetworkIp
       const remoteIpInt = this.ip2num(remoteIp)
       const remoteMask = '255.255.255.0'
+      // const remoteMask = mask
       this.getIpRangeFromAddressAndNetmask(remoteIp, remoteMask)
       const remoteNetworkFirstIp = this.ip2num(this.compRemoteFirstIp)
       const remoteNetworkLastIp = this.ip2num(this.compRemoteLastIp)
-      // const remoteMaskConverted = this.maskGetRemaining('255.255.255.0') - 1
-      // const remoteNetworkFirstIp = remoteIpInt & remoteMaskConverted
       // debugger
-      if (remoteIpInt >= remoteNetworkFirstIp && remoteIpInt <= remoteNetworkLastIp) {
-        alert(`remote ip is compatible with the remote subnet address`)
+      if (remoteIpInt <= remoteNetworkFirstIp || remoteIpInt >= remoteNetworkLastIp) {
+        return alert(`Incompatible subnet for remote IP ${remoteIp}`)
       } else {
-        alert(`remote ip is outside the bounds of the remote subnet`)
+        return alert('yay')
       }
     }
   },
@@ -574,7 +663,9 @@ export default {
     this.load()
     this.getLanNetwork()
     this.getServiceList()
-    this.testRemoteMask()
+    // this.testRemoteMask()
+    // this.testNetmaskIsIP()
+    // this.testObjectField()
     // this.getIpRangeFromAddressAndNetmaskAlert()
   }
 
