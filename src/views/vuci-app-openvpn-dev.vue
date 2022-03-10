@@ -78,8 +78,8 @@
       </a-col>
     </a-row>
 
-    <a-modal :footer="null" :title="modalTitle" v-model="editModal" :width="800">
-      <vuci-form uci-config="openvpn" v-if="editModal">
+    <a-modal :footer="null" :title="modalTitle" v-model="editModal" :width="800" :afterClose="modalClose">
+      <vuci-form uci-config="openvpn" v-if="editModal" @applied="adjustOptions">
         <vuci-named-section :name="editorSection" v-slot="{ s }">
           <!-- <component :is="protoComponentName(s.proto)" :uci-section="s"/> -->
           <vuci-form-item-switch :uci-section="s" :label="'Enable'" name="enable" :initial="false" true-value="1" false-value="0" :help="'To enable the instance'"/>
@@ -89,16 +89,16 @@
           <!-- CLIENT -->
           <div v-if="editorType === 'client'">
             <!-- TLS -->
-            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" @change="getValue" :rules="validateLanIp" placeholder="192.168.1.0" depend="_auth == 'tls'" />
-            <vuci-form-item-input :uci-section="s" :label="'Remote network Netmask'" name="remote_netmask" :rules="validateRemoteMask" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
+            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="remote_ip" @change="getValue" @mousedown="blurTest" :rules="validateRemoteNetworkIp" placeholder="192.168.1.0" depend="_auth == 'tls'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote network Netmask'" name="remote_netmask" @change="getValue" :rules="validateRemoteMask" placeholder="255.255.255.0" depend="_auth == 'tls'"/>
             <vuci-form-upload :uci-section="s" :label="'Certificate authority'" name="ca" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
             <vuci-form-upload :uci-section="s" :label="'Client certificate'" name="cert" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
             <vuci-form-upload :uci-section="s" :label="'Client key'" name="key" depend="_auth == 'tls'" :sectionNaming="uploadedFileWithSectionName"/>
             <!-- STATIC KEY -->
             <vuci-form-item-input :uci-section="s" :label="'Local tunnel endpoint IP'" name="local_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
             <vuci-form-item-input :uci-section="s" :label="'Remote tunnel endpoint IP'" name="remote_ip" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
-            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="network_ip" rules="ipaddr" placeholder="192.168.1.0" depend="_auth == 'skey'" />
-            <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" rules="ipaddr" placeholder="192.168.1.1" depend="_auth == 'skey'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote network IP address'" name="network_ip" @change="getValue" :rules="validateRemoteNetworkIp" placeholder="192.168.1.0" depend="_auth == 'skey'" />
+            <vuci-form-item-input :uci-section="s" :label="'Remote network netmask'" name="network_mask" :rules="validateRemoteMask" placeholder="192.168.1.1" depend="_auth == 'skey'" />
             <vuci-form-upload :uci-section="s" :label="'Static key'" name="secret" depend="_auth == 'skey'" :sectionNaming="uploadedFileWithSectionName"/>
           </div>
           <div v-if="editorType === 'server'">
@@ -197,6 +197,9 @@ export default {
     //     return false
     //   }
     // },
+    modalClose () {
+      this.editorSection = ''
+    },
     isMask (mask) {
       const netMaskRegEx = /^((128|192|224|240|248|252|254)\.0\.0\.0)|(255\.(((0|128|192|224|240|248|252|254)\.0\.0)|(255\.(((0|128|192|224|240|248|252|254)\.0)|255\.(0|128|192|224|240|248|252|254)))))$/
       if (netMaskRegEx.test(mask)) {
@@ -230,19 +233,33 @@ export default {
       //   alert('if v equals to lan ip statement working')
       // }
     },
-    validateLanIp (value) {
+    validateRemoteNetworkIp (value) {
       // this.testas = value
       // alert(`value is ${value}`)
+      // setTimeout(() => {
+      //   console.log('timeout works')
+      //   const lanIpInt = this.ip2num(this.networkLanIp) - 1
+      //   const lanMaskConverted = this.maskGetRemaining(this.networkLanMask) - 1
+      //   const remoteIpInt = this.ip2num(value)
+      //   // debugger
+      //   if (remoteIpInt >= lanIpInt && remoteIpInt <= (lanIpInt + lanMaskConverted)) {
+      //     return `IP address ${value} must not fall within the lan's range`
+      //   } else if (this.isIPv4Addr(value) === false) {
+      //     return 'Entered value must be a valid IPv4 address'
+      //   }
+      // }, 1000)
       const lanIpInt = this.ip2num(this.networkLanIp) - 1
       const lanMaskConverted = this.maskGetRemaining(this.networkLanMask) - 1
       const remoteIpInt = this.ip2num(value)
       // debugger
-
       if (remoteIpInt >= lanIpInt && remoteIpInt <= (lanIpInt + lanMaskConverted)) {
         return `IP address ${value} must not fall within the lan's range`
       } else if (this.isIPv4Addr(value) === false) {
         return 'Entered value must be a valid IPv4 address'
       }
+    },
+    blurTest (value) {
+      console.log('form is out of focus now and value was/is ' + value)
     },
     testNetmaskIsIP () {
       const value = '255.255.255.255'
@@ -260,14 +277,14 @@ export default {
       // const remoteMask = mask
       this.getIpRangeFromAddressAndNetmask(remoteIp, remoteMask)
       const remoteNetworkFirstIp = this.ip2num(this.compRemoteFirstIp)
-      const remoteNetworkLastIp = this.ip2num(this.compRemoteLastIp)
+      // const remoteNetworkLastIp = this.ip2num(this.compRemoteLastIp)
       // debugger
-      if (this.isIPv4Addr(value) === false || this.isNotCharNorSpecial(value) === false) {
-        return 'Entered value is not a valid netmask'
-      } else if (remoteIpInt <= remoteNetworkFirstIp || remoteIpInt >= remoteNetworkLastIp) {
-        return `Incompatible subnet for remote IP ${remoteIp}`
-      }
-      if (remoteIpInt <= remoteNetworkFirstIp || remoteIpInt >= remoteNetworkLastIp) {
+      // if (this.isIPv4Addr(value) === false || this.isNotCharNorSpecial(value) === false) {
+      //   return 'Entered value is not a valid netmask'
+      // } else if (remoteIpInt <= remoteNetworkFirstIp || remoteIpInt >= remoteNetworkLastIp) {
+      //   return `Incompatible subnet for remote IP ${remoteIp}`
+      // }
+      if (remoteIpInt !== remoteNetworkFirstIp) {
         return `Incompatible subnet for remote IP ${remoteIp}`
       } else if (this.isIPv4Addr(value) === false) {
         return 'Entered value is not a valid netmask'
@@ -292,6 +309,7 @@ export default {
         console.log(value.form[name + '_' + 'remote_ip'])
         console.log(value.form[name + '_' + 'remote_netmask'])
         console.log(value)
+        this.blurTest(value)
         const array = Array.from(this.remoteNetworkIp.split('.'), Number)
         console.log(array)
         // if (this.remoteNetworkMask === '') {
@@ -366,6 +384,8 @@ export default {
       this.$uci.set('openvpn', sid, 'dev', 'tun_c_' + name)
       this.$uci.set('openvpn', sid, 'client', '1')
       this.$uci.set('openvpn', sid, 'resolv_retry', 'infinite')
+      // let clientTlsValues = [ '_tls_cipher', 'tls_client','client', 'resolv_retry' ]
+      // let clientSkeyValues = [ '_tls_cipher', 'tls_client','client', 'resolv_retry' ]
     },
     addDefaultServerValues (name, role, sid) {
       // DEFAULT AUTH TLS OPTION
@@ -376,6 +396,7 @@ export default {
       this.$uci.set('openvpn', sid, 'dev', 'tun_s_' + name)
       this.$uci.set('openvpn', sid, 'tls_server', '1')
       this.$uci.set('openvpn', sid, 'upload_files', '0')
+      // let arrayServerValues = [ '_tls_server', 'upload_files' ]
     },
     addClient (name, role) {
       const sid = name + '_client'
@@ -538,6 +559,14 @@ export default {
       await this.$uci.load('openvpn')
       this.sections = this.$uci.sections('openvpn', 'openvpn')
     },
+    // async removeTlsValues() {
+    //   if ( '_auth' === 'skey') {
+    //     await this.$uci.load('openvpn')
+    //     this.$uci.sections('openvpn', 'openvpn').forEach(object => {
+    //       this.$uci.del('testing2_client', object['.name'])
+    //     })
+    //   }
+    // },
     ip2num (ip) {
       var d = ip.split('.')
       var num = 0
@@ -567,6 +596,19 @@ export default {
       this.$rpc.call('ubus', 'call', { object: 'service', method: 'list' }).then(r => {
         this.ubusData = r.openvpn.instances
         console.log(this.ubusData)
+      })
+    },
+    getSectionsOptionTest () {
+      const config = 'openvpn'
+      const section = 'testingDel_client'
+      const option = 'client'
+      // this.$rpc.call('test', 'get_s_option_improved', { config: config, section: section, option: option }).then((res) => {
+      //   alert('testing2_client`s client option is ' + res.value)
+      //   console.log(res.value)
+      // })
+      this.$rpc.call('test', 'try_delete', { config: config, section: section, option: option })
+      this.$rpc.call('test', 'get_s_option').then(({ value }) => {
+        alert('testing2_client`s client option is ' + value)
       })
     },
     ip2longInt (ip) {
@@ -646,6 +688,34 @@ export default {
       } else {
         return alert('yay')
       }
+    },
+    adjustOptions () {
+      // if (this.$uci.changed() > 0) {
+      //   alert('changes were made')
+      // }
+      // alert('running after applied function')
+      setTimeout(() => {
+        console.log('running function after applied')
+        const currentSection = this.sections.filter(s => {
+          return s['.name'] === this.editorSection
+        })
+        console.log(currentSection[0])
+        if (currentSection[0].type === 'client') {
+          console.log('current section is client. Also port got changed to ' + currentSection[0].port)
+          if (currentSection[0]['_auth'] === 'skey') {
+            this.$rpc.call('test', 'del_client_tls_values', { section: this.editorSection })
+          } else if (currentSection[0]['_auth'] === 'tls') {
+            this.$rpc.call('test', 'add_client_default_tls_values', { section: this.editorSection })
+          }
+        } else if (currentSection[0].type === 'server') {
+          console.log('current section is server')
+          if (currentSection[0]['_auth'] === 'skey') {
+            this.$rpc.call('test', 'del_server_tls_values', { section: this.editorSection })
+          } else if (currentSection[0]['_auth'] === 'tls') {
+            this.$rpc.call('test', 'add_server_default_tls_values', { section: this.editorSection })
+          }
+        }
+      }, 1000)
     }
   },
   computed: {
@@ -663,6 +733,8 @@ export default {
     this.load()
     this.getLanNetwork()
     this.getServiceList()
+    // this.removeOptions()
+    // this.getSectionsOptionTest()
     // this.testRemoteMask()
     // this.testNetmaskIsIP()
     // this.testObjectField()
