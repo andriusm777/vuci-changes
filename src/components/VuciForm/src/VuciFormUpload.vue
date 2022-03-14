@@ -47,6 +47,9 @@ export default {
       isFileFound: Boolean
     }
   },
+  timers: {
+    isFile: { time: 1500, autostart: true, immediate: true, repeat: true }
+  },
   methods: {
     // removeFile (info) {
     // const file = info.file
@@ -68,8 +71,8 @@ export default {
       if (Object.prototype.hasOwnProperty.call(this.uciSection, [this.name]) === false || this.uciSection[this.name] === '') {
         this.isFileFound = false
       } else {
-        this.foundFileDirectory = this.uciSection[this.name]
         this.isFileFound = true
+        this.foundFileDirectory = this.uciSection[this.name]
       }
     },
     comboHandleAndSave (info) {

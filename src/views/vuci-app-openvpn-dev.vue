@@ -598,19 +598,6 @@ export default {
         console.log(this.ubusData)
       })
     },
-    getSectionsOptionTest () {
-      const config = 'openvpn'
-      const section = 'testingDel_client'
-      const option = 'client'
-      // this.$rpc.call('test', 'get_s_option_improved', { config: config, section: section, option: option }).then((res) => {
-      //   alert('testing2_client`s client option is ' + res.value)
-      //   console.log(res.value)
-      // })
-      this.$rpc.call('test', 'try_delete', { config: config, section: section, option: option })
-      this.$rpc.call('test', 'get_s_option').then(({ value }) => {
-        alert('testing2_client`s client option is ' + value)
-      })
-    },
     ip2longInt (ip) {
       var components
       // eslint-disable-next-line
@@ -689,33 +676,118 @@ export default {
         return alert('yay')
       }
     },
+    removeOptions () {
+      const sectionAllOptions = {}
+      this.$rpc.call('test', 'get_section_values', { section: 'testingDel_client' }).then((res) => {
+        // console.log('get section values new function output:')
+        // console.log(res['.name'])
+        res = sectionAllOptions
+      })
+      if (!this.areDefaultClientValuesFound(sectionAllOptions)) {
+        // alert('running removeOptions')
+        this.$rpc.call('test', 'add_client_default_tls_values', { section: 'testingDel_client' })
+      }
+    },
     adjustOptions () {
-      // if (this.$uci.changed() > 0) {
-      //   alert('changes were made')
-      // }
-      // alert('running after applied function')
       setTimeout(() => {
         console.log('running function after applied')
         const currentSection = this.sections.filter(s => {
           return s['.name'] === this.editorSection
         })
         console.log(currentSection[0])
-        if (currentSection[0].type === 'client') {
-          console.log('current section is client. Also port got changed to ' + currentSection[0].port)
-          if (currentSection[0]['_auth'] === 'skey') {
-            this.$rpc.call('test', 'del_client_tls_values', { section: this.editorSection })
-          } else if (currentSection[0]['_auth'] === 'tls') {
-            this.$rpc.call('test', 'add_client_default_tls_values', { section: this.editorSection })
+        this.$rpc.call('test', 'get_section_values', { section: this.editorSection }).then((currentSectionLatestOptions) => {
+          console.log('get section values new function output:')
+          // console.log(res['.name'])
+          if (currentSection[0].type === 'client') {
+            // function goes here
+            // if (currentSection[0]['_auth'] === 'skey' && this.areTlsUploadsFound(currentSectionLatestOptions)) {
+            //   this.$rpc.call('test', 'del_client_tls_values', { section: this.editorSection })
+            // } else if (currentSection[0]['_auth'] === 'tls') {
+            //   if (!this.areTlsUploadsFound(currentSectionLatestOptions) && this.areSkeyUploadsFound(currentSectionLatestOptions)) {
+            //     this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.secret })
+            //   }
+            //   if (!this.areDefaultClientTlsValuesFound(currentSectionLatestOptions)) {
+            //     this.$rpc.call('test', 'add_client_default_tls_values', { section: this.editorSection })
+            //   }
+            // }
+            this.adjustClientOptions(currentSection, currentSectionLatestOptions)
+          } else if (currentSection[0].type === 'server') {
+            this.adjustServerOptions(currentSection, currentSectionLatestOptions)
+            // console.log('current section is server')
+            // if (currentSection[0]['_auth'] === 'skey') {
+            //   this.$rpc.call('test', 'del_server_tls_values', { section: this.editorSection })
+            // } else if (currentSection[0]['_auth'] === 'tls') {
+            //   if (!this.areDefaultServerTlsValuesFound(currentSectionLatestOptions)) {
+            //     this.$rpc.call('test', 'add_server_default_tls_values', { section: this.editorSection })
+            //   }
+            // }
           }
-        } else if (currentSection[0].type === 'server') {
-          console.log('current section is server')
-          if (currentSection[0]['_auth'] === 'skey') {
-            this.$rpc.call('test', 'del_server_tls_values', { section: this.editorSection })
-          } else if (currentSection[0]['_auth'] === 'tls') {
-            this.$rpc.call('test', 'add_server_default_tls_values', { section: this.editorSection })
-          }
-        }
+        })
       }, 1000)
+    },
+    adjustClientOptions (currentSectionShownOnUI, currentSectionLatestOptions) {
+      if (currentSectionShownOnUI[0]['_auth'] === 'skey' && this.areTlsUploadsFoundClient(currentSectionLatestOptions) && this.areDefaultClientTlsValuesFound(currentSectionLatestOptions)) {
+        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.ca })
+        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.key })
+        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.cert })
+        this.$rpc.call('test', 'del_client_tls_values', { section: this.editorSection })
+      } else if (currentSectionShownOnUI[0]['_auth'] === 'tls' && this.areSkeyUploadsFound(currentSectionLatestOptions) && !this.areDefaultClientTlsValuesFound(currentSectionLatestOptions)) {
+        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.secret })
+        this.$rpc.call('test', 'del_client_skey_values', { section: this.editorSection })
+        this.$rpc.call('test', 'add_client_default_tls_values', { section: this.editorSection })
+      }
+    },
+    adjustServerOptions (currentSectionShownOnUI, currentSectionLatestOptions) {
+      if (currentSectionShownOnUI[0]['_auth'] === 'skey' && this.areTlsUploadsFoundServer(currentSectionLatestOptions) && this.areDefaultServerTlsValuesFound(currentSectionLatestOptions)) {
+        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.ca })
+        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.key })
+        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.cert })
+        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.dh })
+        this.$rpc.call('test', 'del_server_tls_values', { section: this.editorSection })
+      } else if (currentSectionShownOnUI[0]['_auth'] === 'tls' && this.areSkeyUploadsFound(currentSectionLatestOptions) && !this.areDefaultServerTlsValuesFound(currentSectionLatestOptions)) {
+        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.secret })
+        this.$rpc.call('test', 'del_server_skey_values', { section: this.editorSection })
+        this.$rpc.call('test', 'add_server_default_tls_values', { section: this.editorSection })
+      }
+    },
+    areTlsUploadsFoundClient (sectionAllOptions) {
+      if (!Object.prototype.hasOwnProperty.call(sectionAllOptions, 'ca') && !Object.prototype.hasOwnProperty.call(sectionAllOptions, 'key') && !Object.prototype.hasOwnProperty.call(sectionAllOptions, 'cert')) {
+        return false
+      } else {
+        return true
+      }
+    },
+    areTlsUploadsFoundServer (sectionAllOptions) {
+      if (!Object.prototype.hasOwnProperty.call(sectionAllOptions, 'ca') && !Object.prototype.hasOwnProperty.call(sectionAllOptions, 'key') && !Object.prototype.hasOwnProperty.call(sectionAllOptions, 'cert') && !Object.prototype.hasOwnProperty.call(sectionAllOptions, 'dh')) {
+        return false
+      } else {
+        return true
+      }
+    },
+    areSkeyUploadsFound (sectionAllOptions) {
+      if (!Object.prototype.hasOwnProperty.call(sectionAllOptions, 'secret')) {
+        return false
+      } else {
+        return true
+      }
+    },
+    areDefaultServerTlsValuesFound (sectionAllOptions) {
+      if (!Object.prototype.hasOwnProperty.call(sectionAllOptions, '_tls_cipher') && !Object.prototype.hasOwnProperty.call(sectionAllOptions, '_tls_auth') && !Object.prototype.hasOwnProperty.call(sectionAllOptions, 'tls_server') && !Object.prototype.hasOwnProperty.call(sectionAllOptions, 'auth')) {
+        return false
+      } else {
+        return true
+      }
+    },
+    areDefaultClientTlsValuesFound (sectionAllOptions) {
+      if (!Object.prototype.hasOwnProperty.call(sectionAllOptions, '_tls_cipher') && !Object.prototype.hasOwnProperty.call(sectionAllOptions, 'client') && !Object.prototype.hasOwnProperty.call(sectionAllOptions, 'auth')) {
+        return false
+      } else {
+        return true
+      }
+    },
+    renameTest () {
+      alert('deleting file')
+      this.$rpc.call('file', 'remove', { path: '/etc/vuci-uploads/' + 'ddd' })
     }
   },
   computed: {
@@ -733,6 +805,7 @@ export default {
     this.load()
     this.getLanNetwork()
     this.getServiceList()
+    // this.renameTest()
     // this.removeOptions()
     // this.getSectionsOptionTest()
     // this.testRemoteMask()
