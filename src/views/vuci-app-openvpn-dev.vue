@@ -26,6 +26,9 @@
               <a-tag v-if="setStatusName(record['.name'], record.enable) === 'Disabled'" color="red">
                 {{setStatusName(record['.name'], record.enable)}}
               </a-tag>
+              <a-tag v-if="setStatusName(record['.name'], record.enable) === ''">
+                Can't fetch
+              </a-tag>
             </span>
           </template>
           <template v-slot:action="record">
@@ -481,23 +484,16 @@ export default {
       if (Object.prototype.hasOwnProperty.call(this.ubusData, fullInstanceName)) {
         if (instanceEnableValue === '1' && this.ubusData[fullInstanceName].running === true) {
           status = 'Active'
-        } else if (instanceEnableValue === '1' && this.ubusData[fullInstanceName].running === false) {
+        } else if (instanceEnableValue === '1' && this.ubusData[fullInstanceName].running === false ) {
           status = 'Inactive'
-        }
-      } else {
-        if (instanceEnableValue === '0') {
+        } else if (instanceEnableValue === '0') {
           status = 'Disabled'
         }
-      }
-      // if (instanceEnableValue === '1' && this.ubusData[fullInstanceName].running === true ) {
-      //   status = 'Active'
-      // } else if (instanceEnableValue === '0') {
-      //   status = 'Disabled'
-      // } else if (instanceEnableValue === '1' && Object.prototype.hasOwnProperty.call(this.ubusData, fullInstanceName) === false) {
-      //   status = 'Enabled'
-      // } else if (instanceEnableValue === '1' && this.ubusData[fullInstanceName].running === false) {
-      //   status = 'Inactive'
-      // }
+      } else {
+          if (instanceEnableValue === '0') {
+            status = 'Disabled'
+          }
+        }
       return status
     },
     testObjectField () {
@@ -696,7 +692,7 @@ export default {
         })
         console.log(currentSection[0])
         this.$rpc.call('test', 'get_section_values', { section: this.editorSection }).then((currentSectionLatestOptions) => {
-          console.log('get section values new function output:')
+          // console.log('get section values new function output:')
           // console.log(res['.name'])
           if (currentSection[0].type === 'client') {
             // function goes here
@@ -710,6 +706,7 @@ export default {
             //     this.$rpc.call('test', 'add_client_default_tls_values', { section: this.editorSection })
             //   }
             // }
+            // debugger
             this.adjustClientOptions(currentSection, currentSectionLatestOptions)
           } else if (currentSection[0].type === 'server') {
             this.adjustServerOptions(currentSection, currentSectionLatestOptions)
@@ -722,19 +719,26 @@ export default {
             //   }
             // }
           }
+        }).catch((error) =>{
+          console.log(error)
         })
       }, 1000)
     },
     adjustClientOptions (currentSectionShownOnUI, currentSectionLatestOptions) {
-      if (currentSectionShownOnUI[0]['_auth'] === 'skey' && this.areTlsUploadsFoundClient(currentSectionLatestOptions) && this.areDefaultClientTlsValuesFound(currentSectionLatestOptions)) {
-        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.ca })
-        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.key })
-        this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.cert })
+      if (currentSectionShownOnUI[0]['_auth'] === 'skey' && this.areDefaultClientTlsValuesFound(currentSectionLatestOptions)) {
+        if (this.areTlsUploadsFoundClient(currentSectionLatestOptions)) {
+          this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.ca })
+          this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.key })
+          this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.cert })
+        }
         this.$rpc.call('test', 'del_client_tls_values', { section: this.editorSection })
-      } else if (currentSectionShownOnUI[0]['_auth'] === 'tls' && this.areSkeyUploadsFound(currentSectionLatestOptions) && !this.areDefaultClientTlsValuesFound(currentSectionLatestOptions)) {
+      } else if (currentSectionShownOnUI[0]['_auth'] === 'tls' && this.areSkeyUploadsFound(currentSectionLatestOptions)) {
         this.$rpc.call('file', 'remove', { path: currentSectionLatestOptions.secret })
         this.$rpc.call('test', 'del_client_skey_values', { section: this.editorSection })
-        this.$rpc.call('test', 'add_client_default_tls_values', { section: this.editorSection })
+        if (!this.areDefaultClientTlsValuesFound(currentSectionLatestOptions)) {
+          this.$rpc.call('test', 'add_client_default_tls_values', { section: this.editorSection })
+        }
+        
       }
     },
     adjustServerOptions (currentSectionShownOnUI, currentSectionLatestOptions) {

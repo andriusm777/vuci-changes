@@ -44,7 +44,7 @@ export default {
       uploadedFileName: '',
       foundFileDirectory: '',
       fileList: [],
-      isFileFound: Boolean
+      isFileFound: false
     }
   },
   timers: {
@@ -70,6 +70,7 @@ export default {
     isFile () {
       if (Object.prototype.hasOwnProperty.call(this.uciSection, [this.name]) === false || this.uciSection[this.name] === '') {
         this.isFileFound = false
+        this.foundFileDirectory = ''
       } else {
         this.isFileFound = true
         this.foundFileDirectory = this.uciSection[this.name]
