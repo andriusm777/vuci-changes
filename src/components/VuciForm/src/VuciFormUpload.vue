@@ -10,16 +10,13 @@
       v-model="model"
     >
       <a-button> <a-icon type="upload" />
-        <span v-if="this.isFileFound === false">
+        <span>
           Upload
-        </span>
-        <span v-else>
-          Upload new
         </span>
       </a-button>
     </a-upload>
-    <span v-if="this.isFileFound">{{this.foundFileDirectory}}</span>
-    <span v-else>No file found</span>
+    <span v-if="this.isFileFound">{{foundFileDirectory}}</span>
+    <span v-if="this.isFileFound === false && this.foundFileDirectory === ''">No file found</span>
   </vuci-form-item-template>
 </template>
 
@@ -41,6 +38,7 @@ export default {
   },
   data () {
     return {
+      fileNameWithoutAdditions: '',
       uploadedFileName: '',
       foundFileDirectory: '',
       fileList: [],
@@ -51,50 +49,36 @@ export default {
     isFile: { time: 1500, autostart: true, immediate: true, repeat: true }
   },
   methods: {
-    // removeFile (info) {
-    // const file = info.file
-    // const fileName = file.name
-    // if (Object.prototype.hasOwnProperty.call(this.uciSection, [this.name]) === false || this.uciSection[this.name] === '') {
-    //   this.isFileFound = false
-    // } else {
-    //   this.foundFileDirectory = this.uciSection[this.name]
-    //   this.isFileFound = true
-    // }
-    // this.$rpc.call('file', 'remove', { path: '/etc/vuci-uploads/' + this.sectionNaming + fileName })
-    // return true
-    // return new Promise(resolve => {
-    //   this.getFileName(file)
-    //   resolve()
-    // })
-    // },
-    isFile () {
-      if (Object.prototype.hasOwnProperty.call(this.uciSection, [this.name]) === false || this.uciSection[this.name] === '') {
-        this.isFileFound = false
-        this.foundFileDirectory = ''
+    isFileFoundInSection (section, nameOfUploadedOption) {
+      if (!Object.prototype.hasOwnProperty.call(section, nameOfUploadedOption) || section.nameOfUploadedOption === '') {
+        return false
       } else {
-        this.isFileFound = true
-        this.foundFileDirectory = this.uciSection[this.name]
+        return true
       }
+    },
+    isFile () {
+      this.$rpc.call('test', 'get_section_values', { section: this.uciSection['.name'] }).then((section) => {
+        if (!this.isFileFoundInSection(section, this.name)) {
+          this.isFileFound = false
+          this.foundFileDirectory = ''
+        } else {
+          this.isFileFound = true
+          this.foundFileDirectory = section[this.name].replace('/etc/vuci-uploads/', '')
+        }
+      })
     },
     comboHandleAndSave (info) {
       this.handleChange(info)
       this.__saveTest()
     },
     handleChange (info) {
-      // let fileList = info.fileList
-      //    Limit the number of uploaded files
-      //    Only to show 1 recent uploaded file, and old ones will be replaced by the new
-      // let fileList = info.fileList.slice(-1)
       let fileList = [...info.fileList]
       fileList = fileList.slice(-1)
       console.log(info.fileList)
-      if (info.fileList.length === 0) {
-        // alert('fileList length is 0')
-        // info.file.slice(-1)
+      if (info.fileList.length <= 0) {
+        console.log('length is 0')
         this.uploadedFileName = ''
-        // console.log(info.file)
       }
-      // fileList = fileList.slice(-1)
       this.fileList = fileList
     },
     onUploadArchive (info) {
@@ -116,11 +100,11 @@ export default {
       console.log(this.uploadedFileName)
       console.log('file name without anything ' + fileName)
       console.log('list of files ' + fileList)
-      // console.log(this.fileList)
     },
     getName (file) {
       return new Promise(resolve => {
         this.getFileName(file)
+        this.fileNameWithoutAdditions = file.name
         resolve()
       })
     },
@@ -129,26 +113,12 @@ export default {
         this.$uci.set(this.config, this.sid, this.name, this.uploadedFileName)
         console.log('set uploaded file name')
       } else {
-        this.$uci.set(this.config, this.sid, this.name, '')
+        // this.$uci.set(this.config, this.sid, this.name, '')
+        console.log('file not found')
       }
     }
-    // logConsoleTest () {
-    //   console.log(this.uciSection)
-    // }
-    // __save () {
-    //   if (this.changed()) {
-    //     if (this.save) { return this.save(this) }
-
-    //     if (this.model) {
-    //       this.$uci.set(this.config, this.sid, this.name, this.uploadedFileName)
-    //     } else {
-    //       this.$uci.set(this.config, this.sid, this.name, 'empty')
-    //     }
-    //   }
-    // }
   },
   created () {
-    // this.logConsoleTest()
     this.isFile()
   }
 }
